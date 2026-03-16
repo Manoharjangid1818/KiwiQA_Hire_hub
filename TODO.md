@@ -1,12 +1,20 @@
-# Build Fix Complete
+# GitHub Pages 404 Fix - Deploy Plan
 
-## Steps to Fix Vercel Build Error
+## Completed
+- [x] Created deployment plan
+- [x] Analyzed project structure and configs
+- [x] Created package-new.json with scripts/deps (rename to package.json)
+- [x] Created .github/workflows/pages-deploy.yml
 
-- [x] 1. Diagnose: RTK-Query mismatch → TanStack Query rewrite
-- [x] 2. Rewrite `client/src/hooks/use-proctoring-logs.ts` with compatible exports
-- [x] 3. `npm run build` → SUCCESS (client chunks + server bundle)
-- [x] 4. `npm run dev` → Server started successfully (DB connected, email config loaded)
-- [x] 5. Task complete: Build fixed, ready for Vercel deploy
+## Steps to Complete
+1. Rename package-new.json to package.json
+2. Update vite.config.ts base: '/repo-name/'
+3. `npm install`
+4. Commit all changes (git add . ; git commit -m "Add GitHub Pages deploy")
+5. Push (git push)
+6. Wait for Actions, test https://<username>.github.io/<repo>
+Local test: `npm run build:client && npx vite preview`
 
-**Next:** Push changes and redeploy to Vercel. App runs smoothly.
+**Note:** Repo name/username for base and URL? Adjust vite base to '/repo/' if not root Pages.
+
 
