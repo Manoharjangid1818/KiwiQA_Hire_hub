@@ -1,0 +1,171 @@
+Create a full-stack web application called **KiwiQA Online Examination Portal**.
+
+This application is for conducting Aptitude and General Exams for candidates applying to KiwiQA Services Pvt Ltd.
+
+TECH STACK:
+
+* Backend: Node.js + Express
+* Database: PostgreSQL
+* ORM: Drizzle ORM
+* Authentication: Email OTP (print OTP in console for development)
+* Password hashing using bcrypt
+* JWT authentication
+* Frontend: Simple responsive Bootstrap UI
+
+ROLES:
+
+1. Admin
+2. Student
+
+====================================
+AUTHENTICATION SYSTEM
+=====================
+
+* Student registers with:
+
+  * Full Name
+  * Email
+  * Password
+
+* On registration:
+
+  * Generate 6-digit OTP
+  * OTP expires in 5 minutes
+  * Store OTP in database
+  * Print OTP in console (development mode)
+  * User must verify OTP before login
+
+* Limit OTP requests to 3 per hour
+
+* Login only allowed if verified
+
+====================================
+DATABASE TABLES
+===============
+
+Users:
+
+* id
+* full_name
+* email (unique)
+* password (hashed)
+* role (admin/student)
+* is_verified
+* created_at
+
+OTPs:
+
+* id
+* user_id
+* otp
+* expires_at
+* created_at
+
+Exams:
+
+* id
+* title
+* description
+* duration_minutes
+* total_marks
+* created_at
+
+Questions:
+
+* id
+* exam_id
+* question_text
+* option_a
+* option_b
+* option_c
+* option_d
+* correct_answer
+* marks
+
+ExamAttempts:
+
+* id
+* student_id
+* exam_id
+* score
+* started_at
+* completed_at
+
+StudentAnswers:
+
+* id
+* attempt_id
+* question_id
+* selected_answer
+* is_correct
+* marks_awarded
+
+====================================
+STUDENT FEATURES
+================
+
+* View available exams
+* Start exam
+* Show countdown timer during exam
+* Submit exam
+* Auto evaluate answers
+* View result page with:
+
+  * Total score
+  * Correct answers
+  * Incorrect answers
+  * Selected answers
+  * Correct answers
+  * Attempt date
+* View exam history
+
+====================================
+ADMIN FEATURES
+==============
+
+* Admin dashboard
+* Create exam
+* Add/edit/delete questions
+* View all students
+* View all exam attempts
+* Sort students by:
+
+  * Highest marks
+  * Lowest marks
+* View detailed answer sheet of any student
+
+====================================
+SECURITY
+========
+
+* Protect routes with JWT middleware
+* Role-based access control
+* Prevent student from editing exam after submission
+* Prevent multiple submissions (configurable)
+
+====================================
+PROJECT STRUCTURE
+=================
+
+Use clean MVC structure:
+
+* server/
+
+  * controllers/
+  * routes/
+  * models/
+  * middleware/
+  * utils/
+* client/
+* config/
+
+====================================
+FINAL REQUIREMENTS
+==================
+
+* Provide complete working code
+* Mention file names clearly
+* Provide migration and run instructions
+* Ensure project runs without errors
+* Keep OTP printing in console for development
+* Make UI clean and professional
