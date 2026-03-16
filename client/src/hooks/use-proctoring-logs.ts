@@ -1,57 +1,59 @@
-import { apiSlice } from '@/lib/queryClient';
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest, getQueryFn } from "@/lib/queryClient";
+import { api, buildUrl } from "@shared/routes";
 import { ProctoringLog } from '@shared/schema';
 
-// Endpoints
-export const proctoringApi = apiSlice.injectEndpoints({
-  endpoints: (builder) => ({
-    getProctoringLogsByExamId: builder.query<ProctoringLog[], number>({
-      query: (examId) => `/admin/proctoring-logs/${examId}`,
-      providesTags: (result, error, examId) => [
-        { type: 'ProctoringLog', id: 'LIST' },
-        { type: 'ProctoringLog', id: `EXAM_${examId}` },
-      ],
-    }),
+// Custom queryFn for proctoring logs (uses getQueryFn pattern)
+const proctoringQueryFn = getQueryFn({ on401: "throw" });
 
-    getProctoringLogsByAttemptId: builder.query<ProctoringLog[], number>({
-      query: (attemptId) => `/attempts/${attemptId}/proctoring`,
-      providesTags: (result, error, attemptId) => [
-        { type: 'ProctoringLog', id: `ATTEMPT_${attemptId}` },
-      ],
-    }),
+// GET Queries matching original endpoints - with RTK-style hook names for compatibility
+export function useGetProctoringLogsByExamIdQuery(examId?: number) {
+  return useQuery({
+    queryKey: ['proctoring-logs', 'exam', examId],
+    queryFn: proctoringQueryFn,
+    enabled: !!examId,
+  }) as import("@tanstack/react-query").UseQueryResult<ProctoringLog[], Error>;
+}
 
-    getAllProctoringLogs: builder.query<ProctoringLog[], void>({
-      query: () => '/admin/proctoring-logs',
-      providesTags: [{ type: 'ProctoringLog', id: 'LIST' }],
-    }),
+export function useGetProctoringLogsByAttemptIdQuery(attemptId?: number) {
+  return useQuery({
+    queryKey: ['proctoring-logs', 'attempt', attemptId],
+    queryFn: proctoringQueryFn,
+    enabled: !!attemptId,
+  }) as import("@tanstack/react-query").UseQueryResult<ProctoringLog[], Error>;
+}
 
-    logProctoringActivity: builder.mutation<void, {
+export function useGetAllProctoringLogsQuery() {
+  return useQuery({
+    queryKey: ['proctoring-logs', 'all'],
+    queryFn: proctoringQueryFn,
+  }) as import("@tanstack/react-query").UseQueryResult<ProctoringLog[], Error>;
+}
+
+// POST mutation for logging proctoring activity
+export function useLogProctoringActivityMutation() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (body: {
       attemptId: number;
       activityType: string;
       warningCount?: number;
       details?: string;
-    }>({
-      query: (body) => ({
-        url: '/proctoring/logs',
-        method: 'POST',
-        body,
-      }),
-      invalidatesTags: (result, error, { attemptId }) => [
-        { type: 'ProctoringLog', id: `ATTEMPT_${attemptId}` },
-        { type: 'ProctoringLog', id: 'LIST' },
-      ],
-    }),
-  }),
+    }) => {
+      const res = await apiRequest('POST', '/api/proctoring/logs', body);
+      return res.json();
+    },
+    onSuccess: () => {
+      // Invalidate related queries (matching original invalidatesTags)
+      queryClient.invalidateQueries({ queryKey: ['proctoring-logs'] });
+      queryClient.invalidateQueries({ queryKey: ['proctoring-logs', 'all'] });
+    },
+  });
+}
+
+// Legacy selectors (for compatibility)
+export const selectProctoringLogsByExamId = (examId: number) => ({
+  queryKey: ['proctoring-logs', 'exam', examId]
 });
-
-export const {
-  useGetProctoringLogsByExamIdQuery,
-  useGetProctoringLogsByAttemptIdQuery,
-  useGetAllProctoringLogsQuery,
-  useLogProctoringActivityMutation,
-} = proctoringApi;
-
-export const selectProctoringLogsByExamId = (examId: number) =>
-  apiSlice.endpoints.getProctoringLogsByExamId.select(examId);
-
-export default proctoringApi;
 
