@@ -1,6 +1,6 @@
 # Deploy KiwiQA-Online to Live
 
-## Status: [In Progress]
+## Status: [Frontend Deploy Triggered ✅]
 
 ### Frontend (GitHub Pages)
 - [ ] 1. Check git status/remote/branch

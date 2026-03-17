@@ -1,0 +1,9 @@
+- [x] 1. Edit index.html ✅ (script src=\"./src/main.tsx\")
+- [x] 2. Externalized TF deps in vite.config.ts ✅
+- [ ] 3. Install deps: npm i @mediapipe/tasks-vision@^0.10.14 @mediapipe/face_mesh@^0.4.1705464684
+- [ ] 4. npm run build:client (verify no Rollup error, dist/ generated)
+- [ ] 5. npm run preview (http://localhost:4175/ loads UI)
+- [ ] 6. git add vite.config.ts client/index.html && git commit -m \"fix(gh-pages): script path + TF external (build fixed)\"
+- [ ] 7. git push origin blackboxai/github-pages-fix
+- [ ] 8. Create/merge PR → Pages workflow runs
+- [ ] 9. Verify https://manoharjangid1818.github.io/Hire-Hub/ (clear cache, check F12 no 404s, UI visible)

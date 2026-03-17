@@ -59,7 +59,7 @@
     "dotenv": "^17.3.1",
     "drizzle-orm": "^0.39.3",
     "drizzle-zod": "^0.7.0",
-    "embla-carousel-react": "^1.1.4",
+    "embla-carousel-react": "^8.6.0",
     "express": "^5.2.1",
     "express-session": "^1.18.1",
     "framer-motion": "^11.18.2",
@@ -81,6 +81,7 @@
     "react-icons": "^5.4.0",
     "react-resizable-panels": "^2.1.7",
     "recharts": "^2.15.2",
+    "rest-express": "file:",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "tw-animate-css": "^1.2.5",
@@ -88,8 +89,7 @@
     "wouter": "^3.3.5",
     "ws": "^8.18.0",
     "zod": "^3.24.2",
-    "zod-validation-error": "^3.4.0",
-    "rest-express": "file:"
+    "zod-validation-error": "^3.4.0"
   },
   "devDependencies": {
     "@replit/vite-plugin-cartographer": "^0.4.4",
@@ -128,4 +128,3 @@
     "bufferutil": "^4.0.8"
   }
 }
-
