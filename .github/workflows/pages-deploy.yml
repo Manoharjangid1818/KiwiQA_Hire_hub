@@ -22,10 +22,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v5   # upgraded if available
+        uses: actions/checkout@v5   # ✅ upgraded
 
       - name: Setup Node
-        uses: actions/setup-node@v5  # upgraded
+        uses: actions/setup-node@v5  # ✅ upgraded
         with:
           node-version: 24
           cache: npm
