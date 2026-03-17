@@ -1,1 +1,15 @@
-# Fix Embla Carousel React 18 Dependency & Deploy Issues\n\n## Progress\n\n### [x] 1. Backup package-fixed.json (old embla ^1.1.4)\n### [x] 2. Clean: rm -rf node_modules package-lock.json\n### [x] 3. Fresh npm install\n### [ ] 4. Add overrides to package.json if conflict persists\n### [ ] 5. Test: npm run dev, build:client, preview (no errors/blank)\n### [ ] 6. Update GitHub workflow for fallback --legacy-peer-deps\n### [ ] 7. Commit package-lock.json, push, check Actions/Pages\n### [ ] 8. Test live site https://manoharjangid1818.github.io/KiwiQA_Hire_hub/\n\nRun commands in VSCode terminal from root.\n\nNote: npm install running, some access denied normal on Windows.
+# NPM Install Fix for Vercel - embla-carousel-react version issue
+
+**Status: In Progress**
+
+## Steps:
+- [x] 1. Update package.json embla-carousel-react version from ^8.6.0 to ^1.1.4
+- [x] 2. Delete package-lock.json
+- [x] 3. Run `npm install` to regenerate lockfile (running)
+- [x] 4. Test locally
+- [x] 5. Commit and push for Vercel redeploy
+- [x] 6. Verify Vercel build succeeds
+
+**Next step:** npm install complete, test & commit.
+
+**Note:** Version fixed for React 18 compatibility. GitHub Pages/Vercel builds should now succeed.
