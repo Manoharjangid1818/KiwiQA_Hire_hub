@@ -1,5 +1,5 @@
 import { Switch, Route, Router } from "wouter";
-import hashLocation from "wouter/use-hash-location";
+import { useHashLocation } from "wouter/use-hash-location";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -61,7 +61,7 @@ function App() {
         <ThemeProvider>
           <TooltipProvider>
             <Toaster />
-<Router hook={hashLocation}>
+  <Router hook={useHashLocation}>
   <Routes />
 </Router>
           </TooltipProvider>
