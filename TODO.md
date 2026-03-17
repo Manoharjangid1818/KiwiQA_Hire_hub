@@ -1,8 +1,23 @@
-# GitHub Pages Blank Screen Fix
+# Fix Vercel Deployment - Embla Carousel Version Error
 
-1. [x] Fix package.json corruption (copy package-fixed.json to package.json)
-2. [x] Update App.tsx for hash routing with Wouter for GH Pages compatibility
-3. [ ] npm install (if needed)
-4. [x] npm run build:client -- check dist/
-5. [ ] git add . commit push to main (triggers deploy)
-6. [ ] Verify live https://manoharjangid1818.github.io/Hire-Hub/
+## Steps:
+
+### 1. [x] Edit package.json
+- Change \`\"embla-carousel-react\":\"^8.6.6\"\` → \`\"embla-carousel-react\":\"^8.6.0\"\`
+
+### 2. [x] Delete duplicate package files
+- rm package-fixed.json package-new.json
+
+### 3. [x] Regenerate package-lock.json
+- Delete package-lock.json
+- `npm install`
+
+### 4. [x] Test local build
+- `npm run build:client`
+
+### 5. [ ] Commit and push changes
+- git add .
+- git commit -m \"fix: embla-carousel-react version for Vercel\"
+- git push
+
+## Status: Starting Step 1
