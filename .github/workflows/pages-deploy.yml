@@ -20,21 +20,32 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
+          cache-dependency-paths: true
+          
+      - name: Enable Corepack
+        run: corepack enable &amp;&amp; corepack prepare
+        
       - name: Install dependencies
-        run: npm ci
+        run: npm install --frozen-lockfile
+        
       - name: Build client
+        working-directory: ./client
         run: npm run build:client
+        
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
           path: './dist'
+          
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
