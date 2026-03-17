@@ -28,24 +28,23 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: 'npm'
+          cache: npm
 
-      # 🔥 CHANGE 1: Install
       - name: Install dependencies
         run: npm install
+        working-directory: ./client
 
-      # 🔥 CHANGE 2: Build (IMPORTANT)
       - name: Build
         run: npm run build
+        working-directory: ./client
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
-      # 🔥 CHANGE 3: Correct path
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v4
         with:
-          path: './dist'
+          path: ./client/dist
 
       - name: Deploy to GitHub Pages
         id: deployment
