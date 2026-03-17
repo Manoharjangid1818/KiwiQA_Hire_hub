@@ -18,8 +18,14 @@ export default defineConfig({
   build: {
     outDir: "../dist",
     emptyOutDir: true,
+    rollupOptions: {
+      external: [
+        '@tensorflow/tfjs',
+        '@tensorflow-models/face-landmarks-detection'
+      ]
+    }
   },
-  base: '/Hire-Hub/',
+  base: '/KiwiQA_Hire_hub/',
   server: {
     fs: {
       strict: false,
