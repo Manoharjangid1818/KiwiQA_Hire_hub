@@ -33,6 +33,9 @@ export async function apiRequest(
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
+  const apiBase = import.meta.env.VITE_API_URL || '';
+  const fullUrl = apiBase + url;
+  
   const token = localStorage.getItem("kiwiqa_token");
   const headers: Record<string, string> = data ? { "Content-Type": "application/json" } : {};
   
@@ -40,7 +43,7 @@ export async function apiRequest(
     headers["Authorization"] = `Bearer ${token}`;
   }
 
-  const res = await fetch(url, {
+  const res = await fetch(fullUrl, {
     method,
     headers,
     body: data ? JSON.stringify(data) : undefined,
@@ -50,19 +53,23 @@ export async function apiRequest(
   return res;
 }
 
+
 type UnauthorizedBehavior = "returnNull" | "throw";
 export const getQueryFn: <T>(options: {
   on401: UnauthorizedBehavior;
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
+    const apiBase = import.meta.env.VITE_API_URL || '';
+    const fullUrl = apiBase + (queryKey[0] as string);
+    
     const token = localStorage.getItem("kiwiqa_token");
     const headers: Record<string, string> = {};
     if (token) {
       headers["Authorization"] = `Bearer ${token}`;
     }
 
-    const res = await fetch(queryKey[0] as string, { headers });
+    const res = await fetch(fullUrl, { headers });
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;

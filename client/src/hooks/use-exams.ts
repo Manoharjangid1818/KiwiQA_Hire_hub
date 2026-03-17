@@ -64,13 +64,7 @@ export function useToggleExam() {
       console.log("[useToggleExam] Sending toggle request for exam:", id);
       console.log("[useToggleExam] Token exists:", !!token);
       
-      const res = await fetch(`/api/admin/exams/${id}/toggle`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${token}`
-        }
-      });
+      const res = await apiRequest("PATCH", `/api/admin/exams/${id}/toggle`);
       
       console.log("[useToggleExam] Response status:", res.status);
       console.log("[useToggleExam] Response headers:", res.headers.get("content-type"));

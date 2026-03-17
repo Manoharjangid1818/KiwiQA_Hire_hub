@@ -26,7 +26,7 @@ export function useAuth() {
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
         
-        const res = await fetch(api.auth.me.path, {
+        const res = await fetch(import.meta.env.VITE_API_URL + api.auth.me.path, {
           headers: { Authorization: `Bearer ${token}` },
           signal: controller.signal
         });
@@ -111,14 +111,7 @@ export function useAuth() {
   const updateProfileMutation = useMutation({
     mutationFn: async (data: UpdateProfileInput) => {
       const token = localStorage.getItem("kiwiqa_token");
-      const res = await fetch(api.admin.updateProfile.path, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(data)
-      });
+      const res = await apiRequest("PUT", api.admin.updateProfile.path, data);
       const json = await res.json();
       if (!res.ok) {
         throw new Error(json.message || 'Failed to update profile');

@@ -1,1 +1,10 @@
-# Fix GitHub Pages 404 Deployment - COMPLETE ✅\n\n## Steps:\n- [x] 1. Create this TODO.md and confirm plan.\n- [x] 2. Read package.json and update with missing scripts (\"build:client\": \"vite build\", etc.).\n- [x] 3. Run `npm install` to update deps if needed.\n- [x] 4. Test `npm run build:client` (verify dist/public/index.html).\n- [x] 5. Test `npm run preview` (vite preview --port 4173).\n- [x] 6. git add . ; git commit ; git push origin main (commit 15e01b4).\n- [x] 7. Verify workflow at https://github.com/Manoharjangid1818/Hire-Hub/actions?query=workflow%3Apages-deploy.yml (running).\n- [ ] 8. Check site https://manoharjangid1818.github.io/Hire-Hub/ (may take 5-10min).\n- [ ] 9. gh CLI optional.\n- [x] 10. Backend separate.\n\n## Status\nChanges pushed, workflow triggered. GitHub Pages will deploy frontend to gh-pages branch. Local preview at http://localhost:4173/. Stop with Ctrl+C.\n\nBackend (server/db) requires separate hosting for full app.
+# Git Push Progress
+
+## TODO Steps (from approved plan):
+- [x] 1. git add . 
+- [ ] 2. git commit -m "Add vercel deployment config, update hooks/queryClient/vite.config/pages-deploy workflow, misc fixes"
+- [ ] 3. git checkout -b blackboxai/push-ready-changes
+- [ ] 4. git push -u origin blackboxai/push-ready-changes
+- [ ] 5. Create PR (optional via gh CLI or GitHub UI)
+
+Updated after step 1 complete.

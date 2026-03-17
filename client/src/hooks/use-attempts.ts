@@ -94,12 +94,7 @@ export function useDownloadResults() {
   return useMutation({
     mutationFn: async () => {
       const token = localStorage.getItem("kiwiqa_token");
-      const response = await fetch("/api/student/results", {
-        method: "GET",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      });
+      const response = await apiRequest("GET", "/api/student/results");
       
       if (!response.ok) {
         const error = await response.json();
