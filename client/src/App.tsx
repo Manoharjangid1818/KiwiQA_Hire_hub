@@ -1,4 +1,5 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Router } from "wouter";
+import hashLocation from "wouter/hash";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -24,7 +25,7 @@ import TakeExam from "@/pages/student/TakeExam";
 import ExamResult from "@/pages/student/ExamResult";
 import ExamReport from "@/pages/student/ExamReport";
 
-function Router() {
+function Routes() {
   return (
     <Switch>
       <Route path="/" component={Home} />
@@ -60,7 +61,9 @@ function App() {
         <ThemeProvider>
           <TooltipProvider>
             <Toaster />
-            <Router />
+<Router hook={hashLocation}>
+  <Routes />
+</Router>
           </TooltipProvider>
         </ThemeProvider>
       </QueryClientProvider>
