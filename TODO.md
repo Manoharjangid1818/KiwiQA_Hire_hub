@@ -1,23 +1,14 @@
-# Fix Vercel Deployment - Embla Carousel Version Error
+# NPM Install Fix for Vercel - embla-carousel-react version issue
+
+**Status: In Progress**
 
 ## Steps:
+- [x] 1. Update package.json embla-carousel-react version from ^8.6.0 to ^1.1.4
+- [ ] 2. Delete package-lock.json
+- [ ] 3. Run `npm install` to regenerate lockfile
+- [ ] 4. Test locally
+- [ ] 5. Commit and push for Vercel redeploy
+- [ ] 6. Verify Vercel build succeeds
 
-### 1. [x] Edit package.json
-- Change \`\"embla-carousel-react\":\"^8.6.6\"\` → \`\"embla-carousel-react\":\"^8.6.0\"\`
+**Next step:** Edit package.json
 
-### 2. [x] Delete duplicate package files
-- rm package-fixed.json package-new.json
-
-### 3. [x] Regenerate package-lock.json
-- Delete package-lock.json
-- `npm install`
-
-### 4. [x] Test local build
-- `npm run build:client`
-
-### 5. [ ] Commit and push changes
-- git add .
-- git commit -m \"fix: embla-carousel-react version for Vercel\"
-- git push
-
-## Status: Starting Step 1
