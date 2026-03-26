@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useExams, useCreateExam, useUpdateExam, useExamLinks, useCreateExamLink, useDeleteExamLink, useExamStats, useExamSessions, useActiveExamSessions, useDeleteExam, useCopyExam, useToggleExam } from "@/hooks/use-exams";
 import { useGetProctoringLogsByExamIdQuery } from "@/hooks/use-proctoring-logs";
@@ -91,6 +92,11 @@ export default function AdminDashboard() {
   const [selectedProctoringExamId, setSelectedProctoringExamId] = useState<number | undefined>(undefined);
   const { data: proctoringLogs, isLoading: loadingProctoringLogs } = useGetProctoringLogsByExamIdQuery(selectedProctoringExamId!, { skip: !selectedProctoringExamId });
 
+  // Total appeared candidates stat
+  const { data: appearedStats } = useQuery<{ total: number; publicCandidates: number; registeredCandidates: number }>({
+    queryKey: ['/api/admin/stats/appeared'],
+  });
+
   // Candidates tab state
   const { data: students, isLoading: loadingStudents } = useStudents();
   const { data: allAttempts, isLoading: loadingAllAttempts } = useAllAttempts();
@@ -176,6 +182,10 @@ export default function AdminDashboard() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!csvFile) {
+      toast({ title: "CSV Required", description: "Please upload a CSV file with questions before creating an exam.", variant: "destructive" });
+      return;
+    }
     try {
       const examData = {
         title: newExam.title,
@@ -187,10 +197,8 @@ export default function AdminDashboard() {
       };
       console.log("Creating exam with data:", examData);
       const exam = await createExam(examData);
-      toast({ title: "Exam Created", description: "You can now add questions." });
-      setIsDialogOpen(false);
-      setNewExam({ title: "", description: "", durationMinutes: 60, totalMarks: 100, passingMarks: 0, requireCamera: false });
-      setLocation(`/admin/exams/${exam.id}`);
+      // Upload questions CSV immediately after creation
+      await handleCsvUpload(exam.id);
     } catch (err: any) {
       console.error("Create exam error:", err);
       toast({ title: "Error", description: err.message || "Failed to create exam", variant: "destructive" });
@@ -536,23 +544,35 @@ export default function AdminDashboard() {
                       />
                       <Label htmlFor="requireCamera" className="text-base cursor-pointer">Require Camera Access</Label>
                     </div>
+                    <div className="space-y-2">
+                      <Label className="flex items-center gap-1">
+                        CSV Questions File <span className="text-destructive">*</span>
+                      </Label>
+                      <Input
+                        type="file"
+                        accept=".csv"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) setCsvFile(f); }}
+                        className="h-12 rounded-xl"
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Required. CSV format: question, optionA, optionB, optionC, optionD, correctAnswer, marks
+                      </p>
+                      {csvFile && (
+                        <p className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> {csvFile.name} selected
+                        </p>
+                      )}
+                    </div>
                   </div>
 
                   <div className="px-6 py-4 border-t bg-background/95 backdrop-blur-sm shrink-0 rounded-b-3xl shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
-                    <div className="flex gap-3">
-                      <Button type="submit" disabled={isCreating} className="flex-1 h-12 rounded-xl">
-                        {isCreating ? "Creating..." : "Create Exam"}
-                      </Button>
-                      <Button 
-                        type="button" 
-                        variant="outline"
-                        onClick={() => setShowCsvUpload(true)}
-                        className="flex-1 h-12 rounded-xl"
-                      >
-                        <Upload className="w-4 h-4 mr-2" />
-                        Upload CSV
-                      </Button>
-                    </div>
+                    <Button type="submit" disabled={isCreating || csvUploading || !csvFile} className="w-full h-12 rounded-xl">
+                      {isCreating || csvUploading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />{isCreating ? "Creating..." : "Uploading Questions..."}</> : "Create Exam with Questions"}
+                    </Button>
+                    {!csvFile && (
+                      <p className="text-xs text-muted-foreground text-center mt-2">Upload a CSV file to enable exam creation</p>
+                    )}
                   </div>
                 </form>
 
@@ -651,8 +671,8 @@ export default function AdminDashboard() {
           <Card className="bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20 shadow-sm">
             <CardContent className="p-6">
               <Users className="w-8 h-8 text-blue-600 mb-3" />
-              <h3 className="text-3xl font-bold">{students?.length || 0}</h3>
-              <p className="text-muted-foreground font-medium text-sm">Total Candidates</p>
+              <h3 className="text-3xl font-bold">{appearedStats?.total ?? (students?.length || 0)}</h3>
+              <p className="text-muted-foreground font-medium text-sm">Total Candidates Appeared</p>
             </CardContent>
           </Card>
           <Card className="bg-gradient-to-br from-red-500/10 to-transparent border-red-500/20 shadow-sm">

@@ -87,6 +87,7 @@ export interface IStorage {
   getExamSessionByEmailAndExam(examId: number, email: string): Promise<ExamSessionWithDetails | undefined>;
   getExamSessionsByExamId(examId: number): Promise<ExamSessionWithDetails[]>;
   getActiveExamSessions(examId: number): Promise<ExamSessionWithDetails[]>;
+  getAllExamSessions(): Promise<ExamSession[]>;
   updateExamSession(id: number, data: { status?: string; attemptId?: number; startedAt?: Date; completedAt?: Date; lastHeartbeat?: Date }): Promise<ExamSession>;
   
   // Camera frames methods
@@ -801,6 +802,10 @@ export class DatabaseStorage implements IStorage {
     return detailedSessions;
   }
   
+  async getAllExamSessions(): Promise<ExamSession[]> {
+    return await db.select().from(examSessions).orderBy(desc(examSessions.joinedAt));
+  }
+
   async updateExamSession(id: number, data: { status?: string; attemptId?: number; startedAt?: Date; completedAt?: Date; lastHeartbeat?: Date }): Promise<ExamSession> {
     const [updated] = await db.update(examSessions)
       .set(data)

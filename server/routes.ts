@@ -362,6 +362,13 @@ export async function registerRoutes(
     try {
       const input = api.exams.create.input.parse(req.body);
       console.log("Creating exam with input:", input);
+
+      // Prevent duplicate exam titles
+      const titleExists = await storage.checkExamTitleExists(input.title);
+      if (titleExists) {
+        return res.status(400).json({ message: "An exam with this title already exists. Please choose a different title." });
+      }
+
       const exam = await storage.createExam(input);
       console.log("Exam created successfully:", exam.id);
       const adminUser = (req as any).user;
@@ -2687,6 +2694,56 @@ Do not include any other text or explanation. Start directly with [ and end with
     } catch (err) {
       console.error("[AI] Generate questions error:", err);
       res.status(500).json({ message: "Internal server error: " + err.message });
+    }
+  });
+
+  // Public: Log proctoring activity during exam (no auth required)
+  app.post("/api/public/sessions/:sessionId/log", async (req, res) => {
+    try {
+      const sessionId = Number(req.params.sessionId);
+      const { attemptId, activityType, warningCount, details } = req.body;
+
+      if (!activityType) {
+        return res.status(400).json({ message: "Activity type is required" });
+      }
+
+      const session = await storage.getExamSessionById(sessionId);
+      if (!session) {
+        return res.status(404).json({ message: "Session not found" });
+      }
+
+      const log = await storage.createProctoringLog({
+        attemptId: attemptId || 0,
+        studentId: 0,
+        examId: session.examId,
+        activityType,
+        warningCount: warningCount || 0,
+        details: details || ""
+      });
+
+      res.status(201).json(log);
+    } catch (err) {
+      console.error("Create public proctoring log error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin: Get total appeared candidates count
+  app.get("/api/admin/stats/appeared", authenticateJWT, requireAdmin, async (req, res) => {
+    try {
+      const sessions = await storage.getAllExamSessions();
+      const attempts = await storage.getAllAttempts();
+      const registeredStudentIds = new Set(
+        attempts.filter((a: any) => a.studentId && a.studentId !== 0).map((a: any) => a.studentId)
+      );
+      res.json({
+        total: sessions.length + registeredStudentIds.size,
+        publicCandidates: sessions.length,
+        registeredCandidates: registeredStudentIds.size
+      });
+    } catch (err) {
+      console.error("Get appeared count error:", err);
+      res.status(500).json({ message: "Internal server error" });
     }
   });
 

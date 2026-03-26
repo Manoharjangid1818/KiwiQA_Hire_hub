@@ -64,6 +64,11 @@ export default function PublicExam() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [score, setScore] = useState<number | null>(null);
 
+  // Permission check state
+  const [permissionGranted, setPermissionGranted] = useState(false);
+  const [isCheckingPermission, setIsCheckingPermission] = useState(false);
+  const [permissionError, setPermissionError] = useState<string | null>(null);
+
   // Proctoring state
   const [warnings, setWarnings] = useState(0);
   const [warningType, setWarningType] = useState<string | null>(null);
@@ -324,6 +329,40 @@ export default function PublicExam() {
     setMicEnabled(false);
   }, []);
 
+  // Check camera and microphone permissions before exam starts
+  const checkCameraPermission = useCallback(async () => {
+    setIsCheckingPermission(true);
+    setPermissionError(null);
+    let tempStream: MediaStream | null = null;
+    try {
+      tempStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      setPermissionGranted(true);
+      setPermissionError(null);
+    } catch (err: any) {
+      setPermissionGranted(false);
+      if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
+        setPermissionError("Camera and microphone access denied. Please allow access in your browser settings and try again.");
+      } else if (err.name === "NotFoundError") {
+        setPermissionError("No camera or microphone found. Please connect a device and try again.");
+      } else {
+        setPermissionError(`Permission error: ${err.message}`);
+      }
+    } finally {
+      if (tempStream) tempStream.getTracks().forEach(t => t.stop());
+      setIsCheckingPermission(false);
+    }
+  }, []);
+
+  // Ensure video plays when camera is enabled (fix for browsers that don't auto-play)
+  useEffect(() => {
+    if (cameraEnabled && videoRef.current && streamRef.current) {
+      if (!videoRef.current.srcObject) {
+        videoRef.current.srcObject = streamRef.current;
+      }
+      videoRef.current.play().catch(() => {});
+    }
+  }, [cameraEnabled]);
+
   // Tab switch detection
   useEffect(() => {
     if (step !== "exam") return;
@@ -471,7 +510,7 @@ export default function PublicExam() {
 
   // --- Render helpers ---
   const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
-  const requireCamera = examData?.exam?.requireCamera;
+  const requireCamera = !!examData?.exam?.requireCamera;
   const question = questions[currentQ];
   const currentAnswer = answers[question?.id] || "";
   const isWarning = (timeLeft ?? Infinity) < 300;
@@ -577,12 +616,40 @@ export default function PublicExam() {
             </div>
           </div>
           {requireCamera && (
-            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4 flex gap-3">
-              <Camera className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-              <div>
-                <p className="font-medium text-amber-800 dark:text-amber-300">Camera & Proctoring Required</p>
-                <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">This exam requires camera access. You will be monitored for the duration. Do not switch tabs or exit fullscreen.</p>
+            <div className="space-y-3">
+              <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-4 flex gap-3">
+                <Camera className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-amber-800 dark:text-amber-300">Camera & Microphone Required</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-400 mt-1">You must grant camera and microphone access before starting. You will be monitored throughout the exam.</p>
+                </div>
               </div>
+              {!permissionGranted ? (
+                <div className="space-y-2">
+                  <Button
+                    data-testid="button-check-permissions"
+                    type="button"
+                    variant="outline"
+                    className="w-full h-11 rounded-xl border-amber-400 text-amber-700 hover:bg-amber-50"
+                    onClick={checkCameraPermission}
+                    disabled={isCheckingPermission}
+                  >
+                    {isCheckingPermission ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Camera className="w-4 h-4 mr-2" />}
+                    {isCheckingPermission ? "Checking permissions..." : "Allow Camera & Microphone"}
+                  </Button>
+                  {permissionError && (
+                    <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-3 flex gap-2">
+                      <AlertTriangle className="w-4 h-4 text-destructive shrink-0 mt-0.5" />
+                      <p className="text-sm text-destructive">{permissionError}</p>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-300 rounded-xl p-3 flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                  <p className="text-sm font-medium text-green-700 dark:text-green-400">Camera & microphone access granted</p>
+                </div>
+              )}
             </div>
           )}
           <div className="bg-muted rounded-xl p-4 space-y-1 text-sm text-muted-foreground">
@@ -591,9 +658,15 @@ export default function PublicExam() {
             <p>• The exam will auto-submit when time runs out</p>
             {requireCamera && <p>• Stay in fullscreen and keep your face visible at all times</p>}
           </div>
-          <Button data-testid="button-start-exam" className="w-full" size="lg" onClick={handleStartExam} disabled={isStarting}>
+          <Button
+            data-testid="button-start-exam"
+            className="w-full"
+            size="lg"
+            onClick={handleStartExam}
+            disabled={isStarting || (requireCamera && !permissionGranted)}
+          >
             {isStarting ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-            {isStarting ? "Starting..." : "Start Exam"}
+            {isStarting ? "Starting..." : requireCamera && !permissionGranted ? "Grant Permissions to Start" : "Start Exam"}
           </Button>
         </Card>
       </div>
