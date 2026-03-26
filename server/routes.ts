@@ -359,6 +359,12 @@ export async function registerRoutes(
       console.log("Creating exam with input:", input);
       const exam = await storage.createExam(input);
       console.log("Exam created successfully:", exam.id);
+      const adminUser = (req as any).user;
+      await storage.createAuditLog({
+        userId: adminUser.id, userEmail: adminUser.email, userRole: "admin",
+        action: "Created exam",
+        metadata: { examId: exam.id, examTitle: exam.title }
+      }).catch(() => {});
       res.status(201).json(exam);
     } catch (err) {
       console.error("Create exam error:", err);
@@ -455,7 +461,12 @@ export async function registerRoutes(
       console.log("Deleting exam:", examId, exam.title);
       await storage.deleteExam(examId);
       console.log("Exam deleted successfully:", examId);
-      
+      const delUser = (req as any).user;
+      await storage.createAuditLog({
+        userId: delUser.id, userEmail: delUser.email, userRole: "admin",
+        action: "Deleted exam",
+        metadata: { examId, examTitle: exam.title }
+      }).catch(() => {});
       res.status(200).json({ message: "Exam deleted successfully" });
     } catch (err) {
       console.error("Delete exam error:", err);
@@ -600,6 +611,11 @@ export async function registerRoutes(
       }
 
       const attempt = await storage.startAttempt({ examId, studentId });
+      await storage.createAuditLog({
+        userId: studentId, userEmail: (req as any).user.email, userRole: "student",
+        action: "Started exam",
+        metadata: { examId, attemptId: attempt.id }
+      }).catch(() => {});
       res.status(201).json(attempt);
     } catch (err) {
       res.status(500).json({ message: "Internal server error" });
@@ -654,7 +670,11 @@ export async function registerRoutes(
       
       const submittedAttempt = await storage.submitAttempt(attemptId, score);
       console.log("Attempt submitted successfully");
-      
+      await storage.createAuditLog({
+        userId: (req as any).user.id, userEmail: (req as any).user.email, userRole: "student",
+        action: "Submitted exam",
+        metadata: { attemptId, score }
+      }).catch(() => {});
       res.status(200).json(submittedAttempt);
     } catch (err) {
       console.error("Submit exam error:", err);
@@ -2751,6 +2771,200 @@ Do not include any other text or explanation. Start directly with [ and end with
       res.json(logs);
     } catch (err) {
       console.error("Get all proctoring logs error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ============ ANALYTICS ROUTES ============
+
+  app.get("/api/admin/analytics/score-distribution", authenticateJWT, requireAdmin, async (req, res) => {
+    try {
+      const data = await storage.getScoreDistribution();
+      res.json(data);
+    } catch (err) {
+      console.error("Analytics score distribution error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/analytics/pass-fail", authenticateJWT, requireAdmin, async (req, res) => {
+    try {
+      const data = await storage.getPassFailRatio();
+      res.json(data);
+    } catch (err) {
+      console.error("Analytics pass-fail error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  app.get("/api/admin/analytics/avg-time", authenticateJWT, requireAdmin, async (req, res) => {
+    try {
+      const data = await storage.getAvgTimeTaken();
+      res.json(data);
+    } catch (err) {
+      console.error("Analytics avg time error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ============ AUDIT LOG ROUTES ============
+
+  app.get("/api/admin/audit-logs", authenticateJWT, requireAdmin, async (req, res) => {
+    try {
+      const limit = req.query.limit ? Number(req.query.limit) : 500;
+      const logs = await storage.getAuditLogs(limit);
+      res.json(logs);
+    } catch (err) {
+      console.error("Get audit logs error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ============ CODING QUESTIONS ROUTES ============
+
+  // Admin: Create coding question
+  app.post("/api/admin/exams/:examId/coding-questions", authenticateJWT, requireAdmin, async (req, res) => {
+    try {
+      const examId = Number(req.params.examId);
+      const { title, description, sampleInput, sampleOutput, language, starterCode, marks } = req.body;
+      if (!title || !description || !language) {
+        return res.status(400).json({ message: "Title, description, and language are required" });
+      }
+      const question = await storage.createCodingQuestion({
+        examId, title, description,
+        sampleInput: sampleInput || null,
+        sampleOutput: sampleOutput || null,
+        language,
+        starterCode: starterCode || null,
+        marks: marks || 10,
+      });
+      const user = (req as any).user;
+      await storage.createAuditLog({
+        userId: user.id, userEmail: user.email, userRole: "admin",
+        action: "Created coding question",
+        metadata: { examId, questionTitle: title }
+      });
+      res.status(201).json(question);
+    } catch (err) {
+      console.error("Create coding question error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Get coding questions for exam
+  app.get("/api/exams/:examId/coding-questions", authenticateJWT, async (req, res) => {
+    try {
+      const examId = Number(req.params.examId);
+      const questions = await storage.getCodingQuestionsByExamId(examId);
+      res.json(questions);
+    } catch (err) {
+      console.error("Get coding questions error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin: Update coding question
+  app.patch("/api/admin/coding-questions/:id", authenticateJWT, requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      const updated = await storage.updateCodingQuestion(id, req.body);
+      res.json(updated);
+    } catch (err) {
+      console.error("Update coding question error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Admin: Delete coding question
+  app.delete("/api/admin/coding-questions/:id", authenticateJWT, requireAdmin, async (req, res) => {
+    try {
+      const id = Number(req.params.id);
+      await storage.deleteCodingQuestion(id);
+      const user = (req as any).user;
+      await storage.createAuditLog({
+        userId: user.id, userEmail: user.email, userRole: "admin",
+        action: "Deleted coding question",
+        metadata: { questionId: id }
+      });
+      res.json({ message: "Deleted" });
+    } catch (err) {
+      console.error("Delete coding question error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // ============ CODE EXECUTION ROUTE ============
+
+  app.post("/api/coding/execute", authenticateJWT, async (req, res) => {
+    try {
+      const { code, language } = req.body;
+      if (!code || !language) {
+        return res.status(400).json({ message: "Code and language are required" });
+      }
+
+      let output = "";
+      let error = "";
+
+      if (language === "javascript") {
+        // Safe JS execution using Node vm
+        const { execSync } = await import("child_process");
+        try {
+          const result = execSync(
+            `node -e "${code.replace(/"/g, '\\"').replace(/\n/g, "\\n")}"`,
+            { timeout: 5000, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] }
+          );
+          output = result;
+        } catch (e: any) {
+          error = e.stderr || e.message || "Execution error";
+        }
+      } else if (language === "python") {
+        const { execSync } = await import("child_process");
+        const fs = await import("fs");
+        const os = await import("os");
+        const path = await import("path");
+        const tmpFile = path.join(os.tmpdir(), `exec_${Date.now()}.py`);
+        try {
+          fs.writeFileSync(tmpFile, code);
+          const result = execSync(`python3 ${tmpFile}`, { timeout: 5000, encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
+          output = result;
+          fs.unlinkSync(tmpFile);
+        } catch (e: any) {
+          error = e.stderr || e.message || "Python runtime not available or execution error";
+          try { fs.unlinkSync(tmpFile); } catch {}
+        }
+      } else {
+        error = `${language} runtime is not available on this server. Supported: JavaScript, Python.`;
+      }
+
+      res.json({ output: output.trim(), error: error.trim() });
+    } catch (err) {
+      console.error("Code execution error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
+  // Student: Submit coding solution
+  app.post("/api/coding/submit", authenticateJWT, async (req, res) => {
+    try {
+      const { attemptId, questionId, code, language, output } = req.body;
+      const user = (req as any).user;
+      const submission = await storage.createCodingSubmission({
+        attemptId: attemptId || null,
+        questionId,
+        studentId: user.id,
+        code, language,
+        output: output || null,
+        isCorrect: false,
+        marksAwarded: 0,
+      });
+      await storage.createAuditLog({
+        userId: user.id, userEmail: user.email, userRole: "student",
+        action: "Submitted coding solution",
+        metadata: { questionId, language }
+      });
+      res.status(201).json(submission);
+    } catch (err) {
+      console.error("Submit coding solution error:", err);
       res.status(500).json({ message: "Internal server error" });
     }
   });

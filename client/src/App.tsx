@@ -18,12 +18,15 @@ import PublicExam from "@/pages/PublicExam";
 import AdminDashboard from "@/pages/admin/Dashboard";
 import ManageExam from "@/pages/admin/ManageExam";
 import ProfileSettings from "@/pages/admin/ProfileSettings";
+import Analytics from "@/pages/admin/Analytics";
+import AuditLogs from "@/pages/admin/AuditLogs";
 
 import StudentDashboard from "@/pages/student/Dashboard";
 import StartExam from "@/pages/student/StartExam";
 import TakeExam from "@/pages/student/TakeExam";
 import ExamResult from "@/pages/student/ExamResult";
 import ExamReport from "@/pages/student/ExamReport";
+import CodingExam from "@/pages/student/CodingExam";
 
 function Routes() {
   return (
@@ -40,12 +43,15 @@ function Routes() {
       {/* Admin Routes */}
       <Route path="/admin" component={AdminDashboard} />
       <Route path="/admin/profile" component={ProfileSettings} />
+      <Route path="/admin/analytics" component={Analytics} />
+      <Route path="/admin/audit-logs" component={AuditLogs} />
       <Route path="/admin/exams/:id" component={ManageExam} />
 
       {/* Student Routes */}
       <Route path="/student" component={StudentDashboard} />
       <Route path="/student/exams/:id/start" component={StartExam} />
       <Route path="/student/take/:id" component={TakeExam} />
+      <Route path="/student/coding/:examId" component={CodingExam} />
       <Route path="/student/attempts/:id" component={ExamResult} />
       <Route path="/student/reports/:id" component={ExamReport} />
 

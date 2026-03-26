@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -144,6 +144,45 @@ export const cameraFrames = pgTable("camera_frames", {
   capturedAt: timestamp("capted_at").defaultNow(),
 });
 
+// Table for audit logs (tracking admin/candidate actions)
+export const auditLogs = pgTable("audit_logs", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "set null" }),
+  userEmail: text("user_email"),
+  userRole: text("user_role"),
+  action: text("action").notNull(),
+  metadata: jsonb("metadata"),
+  timestamp: timestamp("timestamp").defaultNow(),
+});
+
+// Table for coding questions (Monaco Editor)
+export const codingQuestions = pgTable("coding_questions", {
+  id: serial("id").primaryKey(),
+  examId: integer("exam_id").notNull().references(() => exams.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  sampleInput: text("sample_input"),
+  sampleOutput: text("sample_output"),
+  language: text("language").notNull().default("javascript"), // javascript, python, java
+  starterCode: text("starter_code"),
+  marks: integer("marks").notNull().default(10),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Table for coding submissions
+export const codingSubmissions = pgTable("coding_submissions", {
+  id: serial("id").primaryKey(),
+  attemptId: integer("attempt_id").references(() => examAttempts.id, { onDelete: "cascade" }),
+  questionId: integer("question_id").notNull().references(() => codingQuestions.id, { onDelete: "cascade" }),
+  studentId: integer("student_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  code: text("code").notNull(),
+  language: text("language").notNull(),
+  output: text("output"),
+  isCorrect: boolean("is_correct").default(false),
+  marksAwarded: integer("marks_awarded").default(0),
+  submittedAt: timestamp("submitted_at").defaultNow(),
+});
+
 // Table for proctoring logs (gaze monitoring - NO images stored)
 export const proctoringLogs = pgTable("proctoring_logs", {
   id: serial("id").primaryKey(),
@@ -205,6 +244,21 @@ export const examSessionsRelations = relations(examSessions, ({ one }) => ({
 export const cameraFramesRelations = relations(cameraFrames, ({ one }) => ({
   session: one(examSessions, { fields: [cameraFrames.sessionId], references: [examSessions.id] }),
   attempt: one(examAttempts, { fields: [cameraFrames.attemptId], references: [examAttempts.id] }),
+}));
+
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+  user: one(users, { fields: [auditLogs.userId], references: [users.id] }),
+}));
+
+export const codingQuestionsRelations = relations(codingQuestions, ({ one, many }) => ({
+  exam: one(exams, { fields: [codingQuestions.examId], references: [exams.id] }),
+  submissions: many(codingSubmissions),
+}));
+
+export const codingSubmissionsRelations = relations(codingSubmissions, ({ one }) => ({
+  question: one(codingQuestions, { fields: [codingSubmissions.questionId], references: [codingQuestions.id] }),
+  student: one(users, { fields: [codingSubmissions.studentId], references: [users.id] }),
+  attempt: one(examAttempts, { fields: [codingSubmissions.attemptId], references: [examAttempts.id] }),
 }));
 
 export const insertUserSchema = createInsertSchema(users).omit({ id: true, createdAt: true }).extend({
@@ -276,4 +330,15 @@ export type ExamLinkWithDetails = ExamLink & {
   exam?: Exam;
   _count?: { sessions: number };
 };
+
+export const insertAuditLogSchema = createInsertSchema(auditLogs).omit({ id: true, timestamp: true });
+export const insertCodingQuestionSchema = createInsertSchema(codingQuestions).omit({ id: true, createdAt: true });
+export const insertCodingSubmissionSchema = createInsertSchema(codingSubmissions).omit({ id: true, submittedAt: true });
+
+export type AuditLog = typeof auditLogs.$inferSelect;
+export type InsertAuditLog = typeof auditLogs.$inferInsert;
+export type CodingQuestion = typeof codingQuestions.$inferSelect;
+export type InsertCodingQuestion = typeof codingQuestions.$inferInsert;
+export type CodingSubmission = typeof codingSubmissions.$inferSelect;
+export type InsertCodingSubmission = typeof codingSubmissions.$inferInsert;
 

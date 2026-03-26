@@ -1,0 +1,228 @@
+Enhance my existing "HireHub" Django web application with the following advanced features.
+
+IMPORTANT:
+
+* Do NOT recreate existing features if already implemented
+* Detect existing functionality and extend/improve it
+* Keep code modular and production-ready
+* Do not break current working features
+
+---
+
+1. AI-BASED CHEATING DETECTION (ADVANCED PROCTORING)
+
+---
+
+Implement using face-api.js or TensorFlow.js:
+
+Features:
+
+* Detect multiple faces in camera
+* Detect no face present
+* Detect suspicious head movement (basic simulation if full tracking not possible)
+
+Behavior:
+
+* Show warning popup for each violation
+* Maintain violation count
+* After threshold → auto flag candidate
+* Send all events to backend (Django)
+
+Backend:
+
+* Store in SuspiciousActivity model:
+
+  * type (multiple_faces, no_face, head_movement)
+  * timestamp
+  * candidate & exam reference
+
+UI:
+
+* Real-time alerts on exam screen
+* Show warning count
+
+---
+
+2. CODING TEST ENVIRONMENT
+
+---
+
+Add coding-based exam system:
+
+Frontend:
+
+* Integrate Monaco Editor
+* Language dropdown:
+
+  * Python
+  * Java
+  * JavaScript
+
+Features:
+
+* Write code
+* Run code button
+* Show output
+
+Backend:
+
+* Create API endpoint to execute code safely
+* Use subprocess (securely) OR mock execution if needed
+* Return output/errors
+
+Database:
+
+* Add CodingQuestion model:
+
+  * question
+  * sample input/output
+  * language
+
+---
+
+3. ADVANCED ANALYTICS DASHBOARD
+
+---
+
+Enhance admin dashboard using Chart.js:
+
+Add charts:
+
+* Score Distribution (bar chart)
+* Pass vs Fail ratio (pie chart)
+* Average Time Taken (line or bar chart)
+
+Backend:
+
+* Create APIs to send aggregated data
+
+Frontend:
+
+* Use Chart.js
+* Dynamic charts (AJAX fetch)
+
+---
+
+4. RANDOM QUESTION GENERATOR
+
+---
+
+During exam:
+
+* Randomize:
+
+  * Question order
+  * Options order
+
+Ensure:
+
+* Each candidate gets different order
+* Maintain correct answer mapping
+
+Backend:
+
+* Shuffle questions before sending to frontend
+* Store order in ExamAttempt if needed
+
+---
+
+5. ADVANCED ANTI-CHEAT FEATURES
+
+---
+
+Implement JavaScript detection:
+
+* Detect multiple tabs open
+* Detect screen resize
+* Detect developer tools open
+
+Hints:
+
+* Use:
+
+  * window.innerWidth/outerWidth
+  * debugger detection tricks
+  * visibilitychange
+
+Behavior:
+
+* Show warning on each violation
+* Log to backend
+* Auto-submit after threshold
+
+---
+
+6. AUDIT LOG SYSTEM (VERY IMPORTANT)
+
+---
+
+Create AuditLog model:
+
+Fields:
+
+* user
+* action (string)
+* timestamp
+* metadata (JSON optional)
+
+Track actions:
+
+* Admin:
+
+  * Created exam
+  * Edited exam
+  * Deleted exam
+* Candidate:
+
+  * Started exam
+  * Submitted exam
+  * Violations
+
+Display:
+
+* Admin panel → Audit Logs page
+* Table view with filters
+
+---
+
+7. INTEGRATION REQUIREMENTS
+
+---
+
+* All new features must integrate with existing system
+* Use AJAX/fetch for frontend-backend communication
+* Use Django ORM
+* Maintain clean folder structure
+
+---
+
+8. UI REQUIREMENTS
+
+---
+
+* Tailwind CSS
+* Responsive design
+* Clean charts & tables
+* Warning alerts (modal/toast)
+
+---
+
+9. FINAL OUTPUT
+
+---
+
+* Only new or updated code
+* Mention what was added vs already existing
+* Ensure project runs without errors
+
+---
+
+## GOAL:
+
+Make HireHub a premium, production-ready platform with:
+
+* AI-based proctoring
+* Coding test capability
+* Professional analytics dashboard
+* Strong anti-cheating system
+* Full audit tracking

@@ -53,13 +53,36 @@ Email: `admin@kiwiqa.com` / Password: `admin123` (seeded on first run)
 - Token-based exam links with open/start/complete tracking
 - Live monitoring per exam (active sessions, camera feeds)
 - Export results as CSV per exam
+- **Analytics Dashboard** (`/admin/analytics`): Score Distribution (bar), Pass/Fail Breakdown (pie), Avg Time per Exam (bar) — using Recharts
+- **Audit Log System** (`/admin/audit-logs`): Tracks exam created/deleted, exam started/submitted, coding solutions submitted — filterable by role/action/search
+- **Coding Question Management**: Per-exam coding questions with Monaco Editor, sample I/O, starter code, multi-language (JS/Python/Java)
 
 ### Student
 - Exam list (only enabled exams shown)
-- Full proctoring during exam: webcam, microphone, face detection, tab-switch detection
+- Full proctoring during exam: webcam, microphone, face detection, tab-switch detection, devtools detection, screen resize detection
 - Warning system (up to MAX_WARNINGS, then auto-submit)
 - View results, pass/fail status
 - Request re-exam after completion
+- **Coding Test** (`/student/coding/:examId`): Monaco Editor environment with Run/Submit per question, multi-language support, anti-cheat (tab switch, resize, devtools warnings), output panel
+
+## Database Tables
+
+| Table | Purpose |
+|---|---|
+| `users` | Auth + roles |
+| `exams` | Exam metadata |
+| `questions` | MCQ questions |
+| `exam_attempts` | Student attempt tracking |
+| `student_answers` | Individual answers |
+| `exam_photos` | Periodic snapshots |
+| `reexam_requests` | Re-exam workflow |
+| `exam_links` | Shareable links |
+| `exam_sessions` | Link-based sessions |
+| `camera_frames` | Live monitoring frames |
+| `proctoring_logs` | Gaze/face event logs |
+| `audit_logs` | Admin/student action log |
+| `coding_questions` | Monaco editor questions |
+| `coding_submissions` | Student code submissions |
 
 ## Notable Implementation Details
 

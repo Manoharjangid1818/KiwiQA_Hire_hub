@@ -2,7 +2,7 @@ import { db } from "./db";
 import { eq, desc, and } from "drizzle-orm";
 import {
   users, otps, exams, questions, examAttempts, studentAnswers, passwordResetTokens, examPhotos, reexamRequests,
-  examLinks, examSessions, cameraFrames, proctoringLogs,
+  examLinks, examSessions, cameraFrames, proctoringLogs, auditLogs, codingQuestions, codingSubmissions,
   type User, type InsertUser,
   type Exam, type InsertExam,
   type Question, type InsertQuestion,
@@ -15,7 +15,10 @@ import {
   type ExamLink, type InsertExamLink, type ExamLinkWithDetails,
   type ExamSession, type InsertExamSession, type ExamSessionWithDetails,
   type CameraFrame, type InsertCameraFrame,
-  type ProctoringLog, type InsertProctoringLog
+  type ProctoringLog, type InsertProctoringLog,
+  type AuditLog, type InsertAuditLog,
+  type CodingQuestion, type InsertCodingQuestion,
+  type CodingSubmission, type InsertCodingSubmission,
 } from "@shared/schema";
 
 export interface IStorage {
@@ -105,6 +108,26 @@ export interface IStorage {
   
   // Check if an exam title already exists (case-insensitive)
   checkExamTitleExists(title: string): Promise<boolean>;
+
+  // Audit log methods
+  createAuditLog(log: InsertAuditLog): Promise<AuditLog>;
+  getAuditLogs(limit?: number): Promise<AuditLog[]>;
+
+  // Coding question methods
+  createCodingQuestion(question: InsertCodingQuestion): Promise<CodingQuestion>;
+  getCodingQuestionsByExamId(examId: number): Promise<CodingQuestion[]>;
+  getCodingQuestion(id: number): Promise<CodingQuestion | undefined>;
+  updateCodingQuestion(id: number, data: Partial<InsertCodingQuestion>): Promise<CodingQuestion>;
+  deleteCodingQuestion(id: number): Promise<void>;
+
+  // Coding submission methods
+  createCodingSubmission(submission: InsertCodingSubmission): Promise<CodingSubmission>;
+  getCodingSubmissionsByAttempt(attemptId: number): Promise<CodingSubmission[]>;
+  
+  // Analytics methods
+  getScoreDistribution(): Promise<{ range: string; count: number }[]>;
+  getPassFailRatio(): Promise<{ passed: number; failed: number; pending: number }>;
+  getAvgTimeTaken(): Promise<{ examTitle: string; avgMinutes: number }[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -925,10 +948,104 @@ export class DatabaseStorage implements IStorage {
 
   // Check if an exam title already exists (case-insensitive)
   async checkExamTitleExists(title: string): Promise<boolean> {
-    // Use case-insensitive comparison
     const normalizedTitle = title.toLowerCase().trim();
     const allExams = await db.select().from(exams);
     return allExams.some(exam => exam.title.toLowerCase().trim() === normalizedTitle);
+  }
+
+  // Audit log methods
+  async createAuditLog(log: InsertAuditLog): Promise<AuditLog> {
+    const [result] = await db.insert(auditLogs).values(log).returning();
+    return result;
+  }
+
+  async getAuditLogs(limit = 500): Promise<AuditLog[]> {
+    return db.select().from(auditLogs).orderBy(desc(auditLogs.timestamp)).limit(limit);
+  }
+
+  // Coding question methods
+  async createCodingQuestion(question: InsertCodingQuestion): Promise<CodingQuestion> {
+    const [result] = await db.insert(codingQuestions).values(question).returning();
+    return result;
+  }
+
+  async getCodingQuestionsByExamId(examId: number): Promise<CodingQuestion[]> {
+    return db.select().from(codingQuestions).where(eq(codingQuestions.examId, examId));
+  }
+
+  async getCodingQuestion(id: number): Promise<CodingQuestion | undefined> {
+    const [result] = await db.select().from(codingQuestions).where(eq(codingQuestions.id, id));
+    return result;
+  }
+
+  async updateCodingQuestion(id: number, data: Partial<InsertCodingQuestion>): Promise<CodingQuestion> {
+    const [result] = await db.update(codingQuestions).set(data).where(eq(codingQuestions.id, id)).returning();
+    return result;
+  }
+
+  async deleteCodingQuestion(id: number): Promise<void> {
+    await db.delete(codingQuestions).where(eq(codingQuestions.id, id));
+  }
+
+  // Coding submission methods
+  async createCodingSubmission(submission: InsertCodingSubmission): Promise<CodingSubmission> {
+    const [result] = await db.insert(codingSubmissions).values(submission).returning();
+    return result;
+  }
+
+  async getCodingSubmissionsByAttempt(attemptId: number): Promise<CodingSubmission[]> {
+    return db.select().from(codingSubmissions).where(eq(codingSubmissions.attemptId, attemptId));
+  }
+
+  // Analytics methods
+  async getScoreDistribution(): Promise<{ range: string; count: number }[]> {
+    const allAttempts = await db.select().from(examAttempts);
+    const completed = allAttempts.filter(a => a.score !== null && a.score !== undefined);
+    const ranges = [
+      { range: "0-20", min: 0, max: 20 },
+      { range: "21-40", min: 21, max: 40 },
+      { range: "41-60", min: 41, max: 60 },
+      { range: "61-80", min: 61, max: 80 },
+      { range: "81-100", min: 81, max: 100 },
+    ];
+    return ranges.map(r => ({
+      range: r.range,
+      count: completed.filter(a => {
+        const score = a.score ?? 0;
+        return score >= r.min && score <= r.max;
+      }).length,
+    }));
+  }
+
+  async getPassFailRatio(): Promise<{ passed: number; failed: number; pending: number }> {
+    const all = await db.select().from(examAttempts);
+    let passed = 0, failed = 0, pending = 0;
+    for (const attempt of all) {
+      if (attempt.status === "shortlisted" || attempt.status === "selected") passed++;
+      else if (attempt.status === "rejected") failed++;
+      else pending++;
+    }
+    return { passed, failed, pending };
+  }
+
+  async getAvgTimeTaken(): Promise<{ examTitle: string; avgMinutes: number }[]> {
+    const allExams = await db.select().from(exams);
+    const result: { examTitle: string; avgMinutes: number }[] = [];
+    for (const exam of allExams) {
+      const attempts = await db.select().from(examAttempts)
+        .where(and(eq(examAttempts.examId, exam.id)));
+      const withTime = attempts.filter(a => a.startedAt && a.completedAt);
+      if (withTime.length === 0) {
+        result.push({ examTitle: exam.title, avgMinutes: 0 });
+        continue;
+      }
+      const totalMs = withTime.reduce((sum, a) => {
+        return sum + (new Date(a.completedAt!).getTime() - new Date(a.startedAt!).getTime());
+      }, 0);
+      const avgMs = totalMs / withTime.length;
+      result.push({ examTitle: exam.title, avgMinutes: Math.round(avgMs / 60000) });
+    }
+    return result;
   }
 }
 

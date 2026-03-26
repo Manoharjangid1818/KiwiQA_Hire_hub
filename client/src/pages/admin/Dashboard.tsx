@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useLocation } from "wouter";
-import { User, PlusCircle, Upload, FileText, Users, CheckCircle2, Clock, Camera, Settings, Copy, Edit2, Pencil, ListChecks, Monitor, Trash2, Play, ExternalLink, RotateCw, Sparkles, Power, PowerOff, Download, FileDown, Shield, AlertTriangle, Loader2 } from "lucide-react";
+import { User, PlusCircle, Upload, FileText, Users, CheckCircle2, Clock, Camera, Settings, Copy, Edit2, Pencil, ListChecks, Monitor, Trash2, Play, ExternalLink, RotateCw, Sparkles, Power, PowerOff, Download, FileDown, Shield, AlertTriangle, Loader2, BarChart2, Code2 } from "lucide-react";
 
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -460,7 +460,23 @@ export default function AdminDashboard() {
             <h1 className="text-4xl font-extrabold tracking-tight">Admin Dashboard</h1>
             <p className="text-muted-foreground mt-2 text-lg">Manage exams, generate exam links, and monitor students in real-time.</p>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-wrap">
+            <Button
+              variant="outline"
+              className="h-12 px-5 rounded-xl"
+              onClick={() => setLocation("/admin/analytics")}
+              data-testid="button-nav-analytics"
+            >
+              <BarChart2 className="w-4 h-4 mr-2" /> Analytics
+            </Button>
+            <Button
+              variant="outline"
+              className="h-12 px-5 rounded-xl"
+              onClick={() => setLocation("/admin/audit-logs")}
+              data-testid="button-nav-audit-logs"
+            >
+              <Shield className="w-4 h-4 mr-2" /> Audit Logs
+            </Button>
             <Button 
               variant="outline" 
               className="h-12 px-6 rounded-xl"

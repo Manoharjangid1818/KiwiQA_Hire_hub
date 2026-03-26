@@ -4,7 +4,7 @@ import { useStudentAttempts, useDownloadResults } from "@/hooks/use-attempts";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
-import { Clock, FileText, PowerOff, Download, Loader2 } from "lucide-react";
+import { Clock, FileText, PowerOff, Download, Loader2, Code2 } from "lucide-react";
 
 export default function StudentDashboard() {
   const { data: exams, isLoading: loadingExams } = useExams();
@@ -92,7 +92,7 @@ export default function StudentDashboard() {
                       )}
                     </div>
                   </CardContent>
-                  <CardFooter>
+                  <CardFooter className="flex flex-col gap-2">
                     {isDisabled ? (
                       <Button 
                         className="w-full rounded-xl shadow-md" 
@@ -102,12 +102,23 @@ export default function StudentDashboard() {
                         Exam Unavailable
                       </Button>
                     ) : (
-                      <Button 
-                        className="w-full rounded-xl shadow-md hover:-translate-y-0.5 transition-transform" 
-                        onClick={() => setLocation(`/student/exams/${exam.id}/start` as any)}
-                      >
-                        Start Exam
-                      </Button>
+                      <>
+                        <Button 
+                          className="w-full rounded-xl shadow-md hover:-translate-y-0.5 transition-transform" 
+                          onClick={() => setLocation(`/student/exams/${exam.id}/start` as any)}
+                          data-testid={`button-start-exam-${exam.id}`}
+                        >
+                          Start MCQ Exam
+                        </Button>
+                        <Button
+                          variant="outline"
+                          className="w-full rounded-xl border-indigo-200 dark:border-indigo-700 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                          onClick={() => setLocation(`/student/coding/${exam.id}` as any)}
+                          data-testid={`button-coding-exam-${exam.id}`}
+                        >
+                          <Code2 className="w-4 h-4 mr-2" /> Coding Test
+                        </Button>
+                      </>
                     )}
                   </CardFooter>
                 </Card>
