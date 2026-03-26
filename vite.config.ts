@@ -25,7 +25,7 @@ export default defineConfig({
       ]
     }
   },
-  base: '/KiwiQA_Hire_hub/',
+  base: '/',
   server: {
     fs: {
       strict: false,
