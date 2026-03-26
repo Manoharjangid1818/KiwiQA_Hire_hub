@@ -16,12 +16,6 @@ const FACE_CHECK_INTERVAL = 3000; // 3 seconds
 const AUDIO_CHECK_INTERVAL = 5000; // 5 seconds
 const FULLSCREEN_CHECK_INTERVAL = 1000; // 1 second
 
-// Enhanced termination refs
-const tabTerminateCountRef = useRef(0);
-const faceLossStartTimeRef = useRef<number | null>(null);
-const fullscreenTerminateCountRef = useRef(0);
-const hasTerminatedRef = useRef(false);
-
 // TensorFlow.js and face detection imports - loaded dynamically
 let faceLandmarksDetection: any = null;
 let tf: any = null;
@@ -105,6 +99,12 @@ export default function TakeExam() {
   const [cameraBlocked, setCameraBlocked] = useState(false);
   const cameraBlockedRef = useRef(false);
   const noFaceTimeRef = useRef<number>(0);
+
+  // Enhanced termination refs
+  const tabTerminateCountRef = useRef(0);
+  const faceLossStartTimeRef = useRef<number | null>(null);
+  const fullscreenTerminateCountRef = useRef(0);
+  const hasTerminatedRef = useRef(false);
 
   // Refs
   const videoRef = useRef<HTMLVideoElement>(null);
