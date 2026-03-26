@@ -1,0 +1,281 @@
+Enhance or build the "HireHub" web application using:
+
+Backend: Python Django
+Database: SQLite
+Frontend: Django Templates + Tailwind CSS
+JavaScript: Vanilla JS
+
+IMPORTANT INSTRUCTION:
+
+* If the project already exists, DO NOT recreate existing features.
+* Instead:
+
+  * Detect what is already implemented
+  * Skip duplicate functionality
+  * Improve or extend existing code
+* Only add missing features from the list below.
+* Maintain clean, modular, production-ready code.
+
+---
+
+## CORE MODULES
+
+Ensure these modules exist (create only if missing):
+
+* Admin Panel
+* Candidate Exam Portal
+* Live Monitoring System
+* Proctoring System
+* Analytics & Reporting
+
+---
+
+1. AUTHENTICATION SYSTEM
+
+---
+
+* Ensure admin login/logout exists
+* Ensure candidate access via unique exam link (token-based)
+* Add role-based access if missing
+
+---
+
+2. ADMIN DASHBOARD
+
+---
+
+If not present, create dashboard with:
+
+* Total Candidates Appeared
+* Total Exams Created
+* Active Exams
+* Suspicious Activity Alerts
+* Links Generated / Opened / Started / Completed
+
+Add if missing:
+
+* Recent Exams section (last 5)
+* Candidate Activity Table
+
+---
+
+3. EXAM MANAGEMENT
+
+---
+
+Ensure features:
+
+* Create exam (title, description, duration, passing marks)
+* Enable/Disable exam toggle
+* Edit exam
+* Delete exam
+* Duplicate exam (copy with new name)
+
+---
+
+4. QUESTION MANAGEMENT
+
+---
+
+Ensure:
+
+* Manual MCQ creation
+* CSV upload (max 200 questions)
+
+If CSV not implemented:
+
+* Add CSV upload with validation
+* Format:
+  Question, Option1, Option2, Option3, Option4, CorrectAnswer
+
+---
+
+5. CANDIDATE MANAGEMENT
+
+---
+
+Ensure:
+
+* Candidate listing
+* Search & filter
+* Sorting by marks
+* Export results as CSV
+
+---
+
+6. EXAM LINK TRACKING
+
+---
+
+If missing, implement:
+
+* Unique token-based exam links
+* Track:
+
+  * Links generated
+  * Links opened
+  * Exams started
+  * Exams completed
+
+---
+
+7. EXAM INTERFACE
+
+---
+
+Ensure:
+
+* Timer
+* Question display
+* Submit functionality
+
+---
+
+8. PROCTORING SYSTEM
+
+---
+
+If not implemented, add:
+
+* Webcam + microphone access (getUserMedia)
+* Floating camera preview (top-right)
+
+Detection:
+
+* Tab switch
+* Window blur
+* Face not visible (simulate logic)
+
+Rules:
+
+* Show warning on each violation
+* Maintain counter
+* After 3 warnings → auto-submit exam
+
+---
+
+9. ANTI-CHEATING FEATURES
+
+---
+
+Ensure:
+
+* Disable right click
+* Disable copy/paste/select all
+* Detect tab switching
+
+---
+
+10. LIVE MONITORING (ADMIN)
+
+---
+
+If missing, create:
+
+* Live dashboard showing:
+
+  * Active candidates
+  * Exam status
+  * Warning counts
+
+---
+
+11. RE-EXAM REQUEST SYSTEM
+
+---
+
+If missing:
+
+Candidate:
+
+* "Request Re-Exam" button
+
+Admin:
+
+* Accept / Reject requests
+
+---
+
+12. PERFORMANCE ANALYSIS
+
+---
+
+Ensure:
+
+* Candidate result view (score, correct/incorrect)
+* Pass/Fail based on passing marks
+
+---
+
+13. RESULTS & REPORTS
+
+---
+
+Ensure:
+
+* Exam-wise results
+* CSV export
+* Include score, time, warnings
+
+---
+
+14. DATABASE MODELS
+
+---
+
+Update or create models only if missing:
+
+* Exam (include passing_marks, is_active)
+* ExamAttempt (status, warnings_count, auto_submitted)
+* SuspiciousActivity
+* ReExamRequest
+
+---
+
+15. UI IMPROVEMENTS
+
+---
+
+* Use Tailwind CSS
+* Ensure responsive design
+* Add:
+
+  * Tables
+  * Alerts/modals
+  * Dashboard cards
+
+---
+
+16. TECHNICAL REQUIREMENTS
+
+---
+
+* Follow Django MVT
+* Use Django ORM
+* CSRF protection
+* Form validation
+* Clean folder structure
+
+---
+
+17. FINAL OUTPUT
+
+---
+
+* Only modified or newly added code
+* Clearly mention:
+
+  * What was already present
+  * What was added
+* Ensure project runs without errors
+
+Commands:
+pip install -r requirements.txt
+python manage.py migrate
+python manage.py runserver
+
+---
+
+## GOAL:
+
+Make the project fully functional, optimized, and production-ready while avoiding duplicate code.

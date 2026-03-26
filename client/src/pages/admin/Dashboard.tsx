@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useExams, useCreateExam, useUpdateExam, useExamLinks, useCreateExamLink, useDeleteExamLink, useExamStats, useExamSessions, useActiveExamSessions, useDeleteExam, useCopyExam, useToggleExam } from "@/hooks/use-exams";
 import { useGetProctoringLogsByExamIdQuery } from "@/hooks/use-proctoring-logs";
+import { useStudents } from "@/hooks/use-users";
+import { useAllAttempts, useAdminReexamRequests, useUpdateReexamRequest } from "@/hooks/use-attempts";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -88,6 +90,18 @@ export default function AdminDashboard() {
   // For proctoring logs
   const [selectedProctoringExamId, setSelectedProctoringExamId] = useState<number | undefined>(undefined);
   const { data: proctoringLogs, isLoading: loadingProctoringLogs } = useGetProctoringLogsByExamIdQuery(selectedProctoringExamId!, { skip: !selectedProctoringExamId });
+
+  // Candidates tab state
+  const { data: students, isLoading: loadingStudents } = useStudents();
+  const { data: allAttempts, isLoading: loadingAllAttempts } = useAllAttempts();
+  const [candidateSearch, setCandidateSearch] = useState("");
+  const [candidateExamFilter, setCandidateExamFilter] = useState<string>("all");
+  const [candidateSortBy, setCandidateSortBy] = useState<"name" | "marks" | "email">("name");
+
+  // Re-exam requests tab state
+  const { data: adminReexamRequests, isLoading: loadingReexamRequests } = useAdminReexamRequests();
+  const { mutateAsync: updateReexamRequest, isPending: isUpdatingReexam } = useUpdateReexamRequest();
+  const [reexamActionId, setReexamActionId] = useState<number | null>(null);
 
   // Fetch exam attempts count on mount - FIXED: dependency optimized
   useEffect(() => {
@@ -595,21 +609,53 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <Card className="bg-gradient-to-br from-primary/10 to-transparent border-primary/20 shadow-sm">
             <CardContent className="p-6">
-              <FileText className="w-8 h-8 text-primary mb-4" />
+              <FileText className="w-8 h-8 text-primary mb-3" />
               <h3 className="text-3xl font-bold">{exams?.length || 0}</h3>
-              <p className="text-muted-foreground font-medium">Total Exams</p>
+              <p className="text-muted-foreground font-medium text-sm">Total Exams</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-green-500/10 to-transparent border-green-500/20 shadow-sm">
+            <CardContent className="p-6">
+              <Power className="w-8 h-8 text-green-600 mb-3" />
+              <h3 className="text-3xl font-bold">{exams?.filter((e: any) => e.isEnabled !== false).length || 0}</h3>
+              <p className="text-muted-foreground font-medium text-sm">Active Exams</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-blue-500/10 to-transparent border-blue-500/20 shadow-sm">
+            <CardContent className="p-6">
+              <Users className="w-8 h-8 text-blue-600 mb-3" />
+              <h3 className="text-3xl font-bold">{students?.length || 0}</h3>
+              <p className="text-muted-foreground font-medium text-sm">Total Candidates</p>
+            </CardContent>
+          </Card>
+          <Card className="bg-gradient-to-br from-red-500/10 to-transparent border-red-500/20 shadow-sm">
+            <CardContent className="p-6">
+              <AlertTriangle className="w-8 h-8 text-red-600 mb-3" />
+              <h3 className="text-3xl font-bold">
+                {adminReexamRequests?.filter((r: any) => r.status === "pending").length || 0}
+              </h3>
+              <p className="text-muted-foreground font-medium text-sm">Pending Re-exam Requests</p>
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="exams" className="w-full">
-          <TabsList className="h-14 p-1 bg-muted/50 rounded-xl mb-6 inline-flex w-auto border border-border/50">
-            <TabsTrigger value="exams" className="rounded-lg h-10 px-6 font-medium text-base">Manage Exams</TabsTrigger>
-            <TabsTrigger value="download" className="rounded-lg h-10 px-6 font-medium text-base">Download Results</TabsTrigger>
-            <TabsTrigger value="proctoring" className="rounded-lg h-10 px-6 font-medium text-base">Proctoring Logs</TabsTrigger>
+          <TabsList className="h-14 p-1 bg-muted/50 rounded-xl mb-6 flex flex-wrap w-auto border border-border/50 gap-1">
+            <TabsTrigger value="exams" className="rounded-lg h-10 px-5 font-medium">Manage Exams</TabsTrigger>
+            <TabsTrigger value="candidates" className="rounded-lg h-10 px-5 font-medium">Candidates</TabsTrigger>
+            <TabsTrigger value="reexam" className="rounded-lg h-10 px-5 font-medium flex items-center gap-2">
+              Re-exam Requests
+              {adminReexamRequests?.filter((r: any) => r.status === "pending").length ? (
+                <span className="bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 leading-none">
+                  {adminReexamRequests.filter((r: any) => r.status === "pending").length}
+                </span>
+              ) : null}
+            </TabsTrigger>
+            <TabsTrigger value="download" className="rounded-lg h-10 px-5 font-medium">Download Results</TabsTrigger>
+            <TabsTrigger value="proctoring" className="rounded-lg h-10 px-5 font-medium">Proctoring Logs</TabsTrigger>
           </TabsList>
 
           <TabsContent value="exams">
@@ -717,6 +763,264 @@ export default function AdminDashboard() {
                 </Card>
               ))}
             </div>
+          </TabsContent>
+
+          {/* ── Candidates Tab ── */}
+          <TabsContent value="candidates">
+            <Card className="border-border/60">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="w-5 h-5" />
+                  Candidate Management
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {/* Filters */}
+                <div className="flex flex-col sm:flex-row gap-3 mb-5">
+                  <Input
+                    placeholder="Search by name or email..."
+                    value={candidateSearch}
+                    onChange={e => setCandidateSearch(e.target.value)}
+                    className="h-10 rounded-xl flex-1"
+                  />
+                  <Select value={candidateExamFilter} onValueChange={setCandidateExamFilter}>
+                    <SelectTrigger className="h-10 rounded-xl w-full sm:w-[220px]">
+                      <SelectValue placeholder="Filter by exam" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Exams</SelectItem>
+                      {exams?.map((exam: any) => (
+                        <SelectItem key={exam.id} value={String(exam.id)}>{exam.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={candidateSortBy} onValueChange={v => setCandidateSortBy(v as any)}>
+                    <SelectTrigger className="h-10 rounded-xl w-full sm:w-[180px]">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="name">Sort by Name</SelectItem>
+                      <SelectItem value="email">Sort by Email</SelectItem>
+                      <SelectItem value="marks">Sort by Marks (High→Low)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {loadingStudents || loadingAllAttempts ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : (() => {
+                  const attemptsArr: any[] = allAttempts || [];
+                  const studentsArr: any[] = students || [];
+
+                  const rows = studentsArr
+                    .map((student: any) => {
+                      const studentAttempts = attemptsArr.filter((a: any) => a.studentId === student.id);
+                      const filteredAttempts = candidateExamFilter === "all"
+                        ? studentAttempts
+                        : studentAttempts.filter((a: any) => String(a.examId) === candidateExamFilter);
+                      const bestScore = filteredAttempts.length
+                        ? Math.max(...filteredAttempts.map((a: any) => a.score ?? 0))
+                        : null;
+                      const latestAttempt = filteredAttempts.sort((a: any, b: any) =>
+                        new Date(b.startedAt || 0).getTime() - new Date(a.startedAt || 0).getTime()
+                      )[0];
+                      return { student, filteredAttempts, bestScore, latestAttempt };
+                    })
+                    .filter(({ student, filteredAttempts }) => {
+                      const matchesSearch =
+                        !candidateSearch ||
+                        student.fullName?.toLowerCase().includes(candidateSearch.toLowerCase()) ||
+                        student.email?.toLowerCase().includes(candidateSearch.toLowerCase());
+                      const matchesExam = candidateExamFilter === "all" || filteredAttempts.length > 0;
+                      return matchesSearch && matchesExam;
+                    })
+                    .sort((a, b) => {
+                      if (candidateSortBy === "marks") return (b.bestScore ?? -1) - (a.bestScore ?? -1);
+                      if (candidateSortBy === "email") return a.student.email.localeCompare(b.student.email);
+                      return (a.student.fullName || "").localeCompare(b.student.fullName || "");
+                    });
+
+                  if (!rows.length) {
+                    return (
+                      <div className="text-center py-10 text-muted-foreground">
+                        <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                        <p>No candidates found.</p>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="overflow-x-auto rounded-xl border border-border/50">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="bg-slate-50 dark:bg-slate-900 border-b border-border/50">
+                            <th className="text-left p-3 font-semibold">Candidate</th>
+                            <th className="text-left p-3 font-semibold">Email</th>
+                            <th className="text-center p-3 font-semibold">Exams Taken</th>
+                            <th className="text-center p-3 font-semibold">Best Score</th>
+                            <th className="text-center p-3 font-semibold">Last Attempt</th>
+                            <th className="text-center p-3 font-semibold">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {rows.map(({ student, filteredAttempts, bestScore, latestAttempt }) => {
+                            const examForBest = latestAttempt
+                              ? exams?.find((e: any) => e.examId === latestAttempt.examId || e.id === latestAttempt.examId)
+                              : null;
+                            const passing = examForBest?.passingMarks ?? 0;
+                            const passed = bestScore !== null && passing > 0 ? bestScore >= passing : null;
+                            return (
+                              <tr key={student.id} className="border-b border-border/30 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-colors">
+                                <td className="p-3 font-medium">{student.fullName || "—"}</td>
+                                <td className="p-3 text-muted-foreground">{student.email}</td>
+                                <td className="p-3 text-center">{filteredAttempts.length}</td>
+                                <td className="p-3 text-center font-semibold">
+                                  {bestScore !== null ? bestScore : <span className="text-muted-foreground">—</span>}
+                                </td>
+                                <td className="p-3 text-center text-muted-foreground text-xs">
+                                  {latestAttempt?.startedAt
+                                    ? format(new Date(latestAttempt.startedAt), "MMM d, yyyy")
+                                    : "—"}
+                                </td>
+                                <td className="p-3 text-center">
+                                  {passed === true && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                                      <CheckCircle2 className="w-3 h-3 mr-1" /> Passed
+                                    </span>
+                                  )}
+                                  {passed === false && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400">
+                                      Failed
+                                    </span>
+                                  )}
+                                  {passed === null && filteredAttempts.length > 0 && (
+                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                      Attempted
+                                    </span>
+                                  )}
+                                  {filteredAttempts.length === 0 && (
+                                    <span className="text-muted-foreground text-xs">No attempts</span>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                      <div className="p-3 text-xs text-muted-foreground border-t border-border/30">
+                        Showing {rows.length} candidate{rows.length !== 1 ? "s" : ""}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* ── Re-exam Requests Tab ── */}
+          <TabsContent value="reexam">
+            <Card className="border-border/60">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <RotateCw className="w-5 h-5" />
+                  Re-exam Requests
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {loadingReexamRequests ? (
+                  <div className="flex items-center justify-center py-10">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                ) : adminReexamRequests && adminReexamRequests.length > 0 ? (
+                  <div className="space-y-3">
+                    {adminReexamRequests.map((req: any) => (
+                      <div
+                        key={req.id}
+                        className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-border/50 gap-3"
+                      >
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-semibold">{req.student?.fullName || `Student #${req.studentId}`}</p>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                              req.status === "pending"
+                                ? "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400"
+                                : req.status === "approved"
+                                ? "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400"
+                                : "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400"
+                            }`}>
+                              {req.status}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{req.student?.email}</p>
+                          <p className="text-sm font-medium mt-1">
+                            Exam: {req.exam?.title || `Exam #${req.examId}`}
+                          </p>
+                          {req.reason && (
+                            <p className="text-sm text-muted-foreground mt-1 italic">"{req.reason}"</p>
+                          )}
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Requested: {req.createdAt ? format(new Date(req.createdAt), "MMM d, yyyy h:mm a") : "—"}
+                          </p>
+                        </div>
+                        {req.status === "pending" && (
+                          <div className="flex gap-2 shrink-0">
+                            <Button
+                              size="sm"
+                              className="rounded-xl bg-green-600 hover:bg-green-700 text-white"
+                              disabled={isUpdatingReexam && reexamActionId === req.id}
+                              onClick={async () => {
+                                setReexamActionId(req.id);
+                                try {
+                                  await updateReexamRequest({ requestId: req.id, status: "approved" });
+                                  toast({ title: "Request Approved", description: "The candidate may now retake the exam." });
+                                } catch (err: any) {
+                                  toast({ title: "Error", description: err.message, variant: "destructive" });
+                                } finally {
+                                  setReexamActionId(null);
+                                }
+                              }}
+                            >
+                              {isUpdatingReexam && reexamActionId === req.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4 mr-1" />}
+                              Approve
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="rounded-xl border-red-500/40 text-red-600 hover:bg-red-50"
+                              disabled={isUpdatingReexam && reexamActionId === req.id}
+                              onClick={async () => {
+                                setReexamActionId(req.id);
+                                try {
+                                  await updateReexamRequest({ requestId: req.id, status: "rejected" });
+                                  toast({ title: "Request Rejected", description: "The re-exam request has been declined." });
+                                } catch (err: any) {
+                                  toast({ title: "Error", description: err.message, variant: "destructive" });
+                                } finally {
+                                  setReexamActionId(null);
+                                }
+                              }}
+                            >
+                              Reject
+                            </Button>
+                          </div>
+                        )}
+                        {req.status !== "pending" && req.adminNote && (
+                          <p className="text-xs text-muted-foreground italic shrink-0">Note: {req.adminNote}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-10 text-muted-foreground">
+                    <RotateCw className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                    <p>No re-exam requests yet.</p>
+                    <p className="text-sm">Requests will appear here when students submit them after completing an exam.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           <TabsContent value="download">

@@ -22,6 +22,8 @@ export async function setupVite(server: Server, app: Express) {
       ...viteLogger,
       error: (msg, options) => {
         viteLogger.error(msg, options);
+        // Only exit on fatal server-startup errors, not client pre-transform warnings
+        if (msg.includes("Pre-transform error") || msg.includes("SyntaxError")) return;
         process.exit(1);
       },
     },
@@ -45,10 +47,10 @@ export async function setupVite(server: Server, app: Express) {
       // always reload the index.html file from disk incase it changes
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
-        `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
+        `src="./src/main.tsx"`,
+        `src="./src/main.tsx?v=${nanoid()}"`,
       );
-      const page = await vite.transformIndexHtml(url, template);
+      const page = await vite.transformIndexHtml("/", template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);
     } catch (e) {
       vite.ssrFixStacktrace(e as Error);
