@@ -104,6 +104,11 @@ export async function registerRoutes(
     }
   }
 
+  // Health check (used by Render and load balancers)
+  app.get("/api/health", (_req, res) => {
+    res.json({ status: "ok", timestamp: new Date().toISOString() });
+  });
+
   // Auth Routes - Registration
   app.post(api.auth.register.path, async (req, res) => {
     try {

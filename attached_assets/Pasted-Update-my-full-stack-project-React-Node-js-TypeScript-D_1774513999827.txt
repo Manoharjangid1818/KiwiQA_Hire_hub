@@ -1,0 +1,118 @@
+Update my full-stack project (React + Node.js + TypeScript + Drizzle ORM) to prepare it for a clean production deployment on Render, and commit all changes to GitHub.
+
+---
+
+## 🎯 GOAL
+
+* Fix database connection (remove localhost usage)
+* Ensure app uses Render PostgreSQL via environment variables
+* Make project production-ready
+* Commit and push all changes to GitHub
+
+---
+
+## ⚠️ IMPORTANT RULES
+
+* Do NOT break existing functionality
+* Keep current architecture intact
+* Only fix deployment-related issues
+* Ensure everything runs after deployment
+
+---
+
+## 🔧 STEP 1: FIX DATABASE CONFIG
+
+Locate database config file (server/db.ts or similar)
+
+Update it to:
+
+* Use process.env.DATABASE_URL only
+* REMOVE any localhost fallback
+* Enable SSL for production
+
+Example:
+
+* Use pg Pool
+* connectionString = process.env.DATABASE_URL
+* ssl: { rejectUnauthorized: false }
+
+---
+
+## 🔧 STEP 2: REMOVE LOCALHOST REFERENCES
+
+Search entire project and REMOVE:
+
+* localhost:5432
+* Any hardcoded DB URL
+
+---
+
+## 🔧 STEP 3: ADD SAFETY CHECK
+
+If DATABASE_URL is missing:
+
+* Throw clear error:
+  "DATABASE_URL is not set"
+
+---
+
+## 🔧 STEP 4: UPDATE PACKAGE.JSON
+
+Ensure scripts exist:
+
+"scripts": {
+"build": "tsx script/build.ts",
+"start": "NODE_ENV=production node dist/index.cjs"
+}
+
+---
+
+## 🔧 STEP 5: ADD PRE-DEPLOY SUPPORT
+
+Ensure project supports DB migration:
+
+* Add drizzle-kit push support
+* Make sure schema is ready
+
+---
+
+## 🔧 STEP 6: ADD DEBUG LOG (TEMP)
+
+Add console log:
+
+* Print DATABASE_URL (masked or partial)
+
+---
+
+## 🔧 STEP 7: CLEAN PROJECT
+
+* Remove unused configs
+* Ensure build works
+* Ensure dist folder builds correctly
+
+---
+
+## 🔧 STEP 8: GIT COMMIT & PUSH
+
+Run:
+
+git add .
+git commit -m "fix: production deployment setup with Render DB"
+git push origin main
+
+---
+
+## 📦 OUTPUT REQUIRED
+
+* Show updated db.ts file
+* Confirm localhost removed
+* Confirm commit pushed
+
+---
+
+## 🎯 FINAL RESULT
+
+* App uses Render database
+* No ECONNREFUSED error
+* Ready for deployment
+* Code safely pushed to GitHub
