@@ -437,7 +437,7 @@ export default function AdminDashboard() {
   };
 
   const getExamLinkUrl = (code: string) => {
-    return `${window.location.origin}/exam/${code}`;
+    return `${window.location.origin}/#/exam/${code}`;
   };
 
   // Get unique exam IDs from sessions for stats
