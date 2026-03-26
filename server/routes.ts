@@ -1896,6 +1896,40 @@ export async function registerRoutes(
     }
   });
   
+  // Public: Create attempt for a public exam session (no auth required)
+  app.post("/api/public/sessions/:sessionId/start-attempt", async (req, res) => {
+    try {
+      const sessionId = Number(req.params.sessionId);
+      const session = await storage.getExamSessionById(sessionId);
+
+      if (!session) {
+        return res.status(404).json({ message: "Session not found" });
+      }
+
+      // If already has an attempt, return it
+      if (session.attemptId) {
+        console.log("[PUBLIC] Returning existing attemptId:", session.attemptId);
+        return res.json({ attemptId: session.attemptId });
+      }
+
+      // Create a new attempt using studentId = 0 (public/guest)
+      const attempt = await storage.startAttempt({ examId: session.examId, studentId: 0 });
+      console.log("[PUBLIC] Created new attempt:", attempt.id, "for examId:", session.examId);
+
+      // Link attempt to session and mark as in_progress
+      await storage.updateExamSession(sessionId, {
+        attemptId: attempt.id,
+        status: "in_progress",
+        startedAt: new Date()
+      });
+
+      res.status(201).json({ attemptId: attempt.id, startedAt: new Date().toISOString() });
+    } catch (err) {
+      console.error("Public start-attempt error:", err);
+      res.status(500).json({ message: "Internal server error" });
+    }
+  });
+
   // ============ RE-EXAM REQUEST ROUTES ============
   
   // Student: Submit re-exam request
