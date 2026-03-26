@@ -1,0 +1,125 @@
+Fix the UI issue in my HireHub project (React + TypeScript + Tailwind CSS) where the "Create Exam" / "Submit" button is not visible properly after uploading CSV questions.
+
+---
+
+## 🚨 ISSUE
+
+* After uploading CSV questions, the "Create Exam" or "Submit" button goes below the visible screen
+* User has to scroll down to find it
+* This affects usability and user experience
+
+---
+
+## ⚠️ IMPORTANT RULES
+
+* Do NOT break existing functionality
+* Do NOT change business logic
+* Only improve UI/UX
+* Keep current layout structure intact
+
+---
+
+## 🎯 REQUIRED FIX
+
+1. MAKE BUTTON ALWAYS VISIBLE
+
+* Ensure "Create Exam" / "Submit" button is:
+
+  * Clearly visible on screen
+  * Easily clickable without excessive scrolling
+
+---
+
+2. UI IMPROVEMENTS (CHOOSE BEST APPROACH)
+
+---
+
+Apply one of the following:
+
+✅ Option A (Preferred):
+
+* Make button sticky at bottom:
+
+  * Use Tailwind:
+    position: sticky OR fixed
+    bottom: 0
+    full width
+    add shadow + background
+
+Example:
+
+* Sticky footer style button container
+
+✅ Option B:
+
+* Move button higher in layout (above CSV section or near form fields)
+
+✅ Option C:
+
+* Add floating action button (bottom-right corner)
+
+---
+
+3. RESPONSIVENESS
+
+---
+
+* Ensure button is visible on:
+
+  * Desktop
+  * Laptop
+  * Mobile screens
+
+---
+
+4. SCROLL HANDLING
+
+---
+
+* Avoid unnecessary long scroll
+* If content is long:
+
+  * Keep button accessible (sticky/fixed)
+
+---
+
+5. STYLING
+
+---
+
+* Use Tailwind CSS
+* Add:
+
+  * Proper spacing
+  * Shadow
+  * Contrast background
+* Ensure button stands out
+
+---
+
+6. TEST CASES
+
+---
+
+* Upload CSV → button should remain visible
+* No scrolling required to find button
+* Button should work correctly
+
+---
+
+## 📦 OUTPUT REQUIRED
+
+* Only updated UI code (React + Tailwind)
+* Mention what approach was used (sticky/fixed/etc.)
+* Ensure no layout break
+
+---
+
+## 🎯 GOAL
+
+Make the "Create Exam / Submit" button:
+
+* Always visible
+* Easily clickable
+* User-friendly
+* Professional UI

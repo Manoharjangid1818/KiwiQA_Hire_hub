@@ -490,133 +490,141 @@ export default function AdminDashboard() {
                   <PlusCircle className="w-5 h-5 mr-2" /> Create New Exam
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-3xl">
-                <DialogHeader>
+              <DialogContent className="sm:max-w-[600px] rounded-3xl max-h-[85vh] flex flex-col p-0 gap-0">
+                <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
                   <DialogTitle className="text-2xl">Create New Exam</DialogTitle>
                 </DialogHeader>
                 
-                <form onSubmit={handleCreate} className="space-y-4 mt-4">
-                  <div className="space-y-2">
-                    <Label>Title</Label>
-                    <Input required value={newExam.title} onChange={e => setNewExam({...newExam, title: e.target.value})} className="h-12 rounded-xl" placeholder="Enter exam title" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Description</Label>
-                    <Input value={newExam.description} onChange={e => setNewExam({...newExam, description: e.target.value})} className="h-12 rounded-xl" placeholder="Enter exam description" />
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
+                <form onSubmit={handleCreate} className="flex flex-col flex-1 overflow-hidden">
+                  <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                     <div className="space-y-2">
-                      <Label>Duration (Minutes)</Label>
-                      <Input required type="number" min={1} value={newExam.durationMinutes} onChange={e => setNewExam({...newExam, durationMinutes: e.target.value as any})} className="h-12 rounded-xl" />
+                      <Label>Title</Label>
+                      <Input required value={newExam.title} onChange={e => setNewExam({...newExam, title: e.target.value})} className="h-12 rounded-xl" placeholder="Enter exam title" />
                     </div>
                     <div className="space-y-2">
-                      <Label>Total Marks</Label>
-                      <Input required type="number" min={1} value={newExam.totalMarks} onChange={e => setNewExam({...newExam, totalMarks: e.target.value as any})} className="h-12 rounded-xl" />
+                      <Label>Description</Label>
+                      <Input value={newExam.description} onChange={e => setNewExam({...newExam, description: e.target.value})} className="h-12 rounded-xl" placeholder="Enter exam description" />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Duration (Minutes)</Label>
+                        <Input required type="number" min={1} value={newExam.durationMinutes} onChange={e => setNewExam({...newExam, durationMinutes: e.target.value as any})} className="h-12 rounded-xl" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Total Marks</Label>
+                        <Input required type="number" min={1} value={newExam.totalMarks} onChange={e => setNewExam({...newExam, totalMarks: e.target.value as any})} className="h-12 rounded-xl" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Minimum Passing Marks</Label>
+                      <Input 
+                        type="number" 
+                        min={0} 
+                        value={newExam.passingMarks} 
+                        onChange={e => setNewExam({...newExam, passingMarks: e.target.value as any})} 
+                        className="h-12 rounded-xl" 
+                        placeholder="Enter passing marks (optional)"
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <input 
+                        type="checkbox" 
+                        id="requireCamera"
+                        checked={newExam.requireCamera}
+                        onChange={(e) => setNewExam({...newExam, requireCamera: e.target.checked})}
+                        className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                      />
+                      <Label htmlFor="requireCamera" className="text-base cursor-pointer">Require Camera Access</Label>
                     </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Minimum Passing Marks</Label>
-                    <Input 
-                      type="number" 
-                      min={0} 
-                      value={newExam.passingMarks} 
-                      onChange={e => setNewExam({...newExam, passingMarks: e.target.value as any})} 
-                      className="h-12 rounded-xl" 
-                      placeholder="Enter passing marks (optional)"
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input 
-                      type="checkbox" 
-                      id="requireCamera"
-                      checked={newExam.requireCamera}
-                      onChange={(e) => setNewExam({...newExam, requireCamera: e.target.checked})}
-                      className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
-                    />
-                    <Label htmlFor="requireCamera" className="text-base cursor-pointer">Require Camera Access</Label>
-                  </div>
-                  
-                  <div className="flex gap-3 pt-4">
-                    <Button type="submit" disabled={isCreating} className="flex-1 h-12 rounded-xl">
-                      {isCreating ? "Creating..." : "Create Exam"}
-                    </Button>
-                    <Button 
-                      type="button" 
-                      variant="outline"
-                      onClick={() => setShowCsvUpload(true)}
-                      className="flex-1 h-12 rounded-xl"
-                    >
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload CSV
-                    </Button>
+
+                  <div className="px-6 py-4 border-t bg-background/95 backdrop-blur-sm shrink-0 rounded-b-3xl shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+                    <div className="flex gap-3">
+                      <Button type="submit" disabled={isCreating} className="flex-1 h-12 rounded-xl">
+                        {isCreating ? "Creating..." : "Create Exam"}
+                      </Button>
+                      <Button 
+                        type="button" 
+                        variant="outline"
+                        onClick={() => setShowCsvUpload(true)}
+                        className="flex-1 h-12 rounded-xl"
+                      >
+                        <Upload className="w-4 h-4 mr-2" />
+                        Upload CSV
+                      </Button>
+                    </div>
                   </div>
                 </form>
 
                 {/* CSV Upload Dialog */}
                 <Dialog open={showCsvUpload} onOpenChange={setShowCsvUpload}>
-                  <DialogContent className="sm:max-w-[500px] rounded-3xl">
-                    <DialogHeader>
+                  <DialogContent className="sm:max-w-[500px] rounded-3xl max-h-[85vh] flex flex-col p-0 gap-0">
+                    <DialogHeader className="px-6 pt-6 pb-0 shrink-0">
                       <DialogTitle>Upload Questions from CSV</DialogTitle>
                     </DialogHeader>
-                    <form onSubmit={handleCreateWithCsv} className="space-y-4 mt-4">
-                      <div className="space-y-2">
-                        <Label>Exam Title</Label>
-                        <Input required value={newExam.title} onChange={e => setNewExam({...newExam, title: e.target.value})} className="h-12 rounded-xl" placeholder="Enter exam title" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Description (Optional)</Label>
-                        <Input value={newExam.description} onChange={e => setNewExam({...newExam, description: e.target.value})} className="h-12 rounded-xl" placeholder="Enter exam description" />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
+                    <form onSubmit={handleCreateWithCsv} className="flex flex-col flex-1 overflow-hidden">
+                      <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
                         <div className="space-y-2">
-                          <Label>Duration (Minutes)</Label>
-                          <Input required type="number" min={1} value={newExam.durationMinutes} onChange={e => setNewExam({...newExam, durationMinutes: e.target.value as any})} className="h-12 rounded-xl" />
+                          <Label>Exam Title</Label>
+                          <Input required value={newExam.title} onChange={e => setNewExam({...newExam, title: e.target.value})} className="h-12 rounded-xl" placeholder="Enter exam title" />
                         </div>
                         <div className="space-y-2">
-                          <Label>Total Marks</Label>
-                          <Input required type="number" min={1} value={newExam.totalMarks} onChange={e => setNewExam({...newExam, totalMarks: e.target.value as any})} className="h-12 rounded-xl" />
+                          <Label>Description (Optional)</Label>
+                          <Input value={newExam.description} onChange={e => setNewExam({...newExam, description: e.target.value})} className="h-12 rounded-xl" placeholder="Enter exam description" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Duration (Minutes)</Label>
+                            <Input required type="number" min={1} value={newExam.durationMinutes} onChange={e => setNewExam({...newExam, durationMinutes: e.target.value as any})} className="h-12 rounded-xl" />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Total Marks</Label>
+                            <Input required type="number" min={1} value={newExam.totalMarks} onChange={e => setNewExam({...newExam, totalMarks: e.target.value as any})} className="h-12 rounded-xl" />
+                          </div>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Minimum Passing Marks</Label>
+                          <Input 
+                            type="number" 
+                            min={0} 
+                            value={newExam.passingMarks} 
+                            onChange={e => setNewExam({...newExam, passingMarks: e.target.value as any})} 
+                            className="h-12 rounded-xl" 
+                            placeholder="Enter passing marks (optional)"
+                          />
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <input 
+                            type="checkbox" 
+                            id="requireCameraCsv"
+                            checked={newExam.requireCamera}
+                            onChange={(e) => setNewExam({...newExam, requireCamera: e.target.checked})}
+                            className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
+                          />
+                          <Label htmlFor="requireCameraCsv" className="text-base cursor-pointer">Require Camera Access</Label>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>CSV File</Label>
+                          <Input 
+                            ref={fileInputRef}
+                            type="file" 
+                            accept=".csv"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) setCsvFile(file);
+                            }}
+                            className="h-12 rounded-xl"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            CSV format: question, optionA, optionB, optionC, optionD, correctAnswer, marks
+                          </p>
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <Label>Minimum Passing Marks</Label>
-                        <Input 
-                          type="number" 
-                          min={0} 
-                          value={newExam.passingMarks} 
-                          onChange={e => setNewExam({...newExam, passingMarks: e.target.value as any})} 
-                          className="h-12 rounded-xl" 
-                          placeholder="Enter passing marks (optional)"
-                        />
+                      <div className="px-6 py-4 border-t bg-background/95 backdrop-blur-sm shrink-0 rounded-b-3xl shadow-[0_-4px_16px_rgba(0,0,0,0.06)]">
+                        <Button type="submit" disabled={csvUploading || !csvFile} className="w-full h-12 rounded-xl">
+                          {csvUploading ? "Uploading..." : "Create Exam with CSV"}
+                        </Button>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <input 
-                          type="checkbox" 
-                          id="requireCameraCsv"
-                          checked={newExam.requireCamera}
-                          onChange={(e) => setNewExam({...newExam, requireCamera: e.target.checked})}
-                          className="w-5 h-5 rounded border-gray-300 text-primary focus:ring-primary"
-                        />
-                        <Label htmlFor="requireCameraCsv" className="text-base cursor-pointer">Require Camera Access</Label>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>CSV File</Label>
-                        <Input 
-                          ref={fileInputRef}
-                          type="file" 
-                          accept=".csv"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) setCsvFile(file);
-                          }}
-                          className="h-12 rounded-xl"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                          CSV format: question, optionA, optionB, optionC, optionD, correctAnswer, marks
-                        </p>
-                      </div>
-                      <Button type="submit" disabled={csvUploading || !csvFile} className="w-full h-12 rounded-xl">
-                        {csvUploading ? "Uploading..." : "Create Exam with CSV"}
-                      </Button>
                     </form>
                   </DialogContent>
                 </Dialog>
