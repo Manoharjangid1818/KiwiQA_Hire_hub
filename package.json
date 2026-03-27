@@ -5,8 +5,8 @@
   "license": "MIT",
   "homepage": "https://manoharjangid1818.github.io/KiwiQA_Hire_hub",
   "scripts": {
-    "dev": "node_modules/.bin/tsx server/index.ts",
-    "build": "tsx script/build.ts",
+    "dev": "npx tsx server/index.ts",
+    "build": "npx tsx script/build.ts",
     "build:client": "vite build",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist",
