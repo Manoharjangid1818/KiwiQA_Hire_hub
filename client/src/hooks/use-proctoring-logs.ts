@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest, getQueryFn } from "@/lib/queryClient";
-import { api, buildUrl } from "@shared/routes";
+import { api, buildUrl } from "../../../shared/routes";
 import { ProctoringLog } from '@shared/schema';
 
 // Custom queryFn for proctoring logs (uses getQueryFn pattern)

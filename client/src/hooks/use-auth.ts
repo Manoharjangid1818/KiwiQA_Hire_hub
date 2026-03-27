@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { api } from "@shared/routes";
+import { api } from "../../../shared/routes";
 import { apiRequest } from "@/lib/queryClient";
 import { z } from "zod";
 import { useLocation } from "wouter";
