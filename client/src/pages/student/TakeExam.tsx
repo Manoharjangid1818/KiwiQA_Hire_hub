@@ -16,6 +16,15 @@ const FACE_CHECK_INTERVAL = 3000; // 3 seconds
 const AUDIO_CHECK_INTERVAL = 5000; // 5 seconds
 const FULLSCREEN_CHECK_INTERVAL = 1000; // 1 second
 
+// Voice Activity Detection constants
+const VOICE_DETECTION_DURATION = 3000;  // ms of sustained voice before warning
+const AUDIO_WARNING_COOLDOWN = 30000;   // ms between successive audio warnings
+const VOICE_FORMANT_LOW_HZ = 300;       // lower bound of primary speech formants
+const VOICE_FORMANT_HIGH_HZ = 3400;     // upper bound of primary speech formants
+const VOICE_MIN_FORMANT_ENERGY = 18;    // minimum avg formant bin energy (0-255)
+const VOICE_FORMANT_RATIO_THRESHOLD = 0.38; // formant energy / total energy to classify as voice
+const VOICE_MIN_OVERALL_LEVEL = 10;     // minimum overall level to avoid triggering on silence
+
 // TensorFlow.js and face detection imports - loaded dynamically
 let faceLandmarksDetection: any = null;
 let tf: any = null;
@@ -118,6 +127,10 @@ export default function TakeExam() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const analyserRef = useRef<AnalyserNode | null>(null);
   const animationFrameRef = useRef<number | null>(null);
+
+  // Voice Activity Detection refs
+  const voiceDetectionStartRef = useRef<number | null>(null); // when sustained voice started
+  const lastAudioWarningRef = useRef<number | null>(null);    // last time an audio warning fired
 
   // Refs for use in closures
   const answersRef = useRef<Record<number, string>>({});
@@ -369,24 +382,84 @@ export default function TakeExam() {
     }
   }, [addWarning]);
 
-  // Audio monitoring
+  // Voice Activity Detection — detects only human speech, ignores background noise
   const checkAudioLevel = useCallback(() => {
-    if (!analyserRef.current) return;
-    
-    const dataArray = new Uint8Array(analyserRef.current.frequencyBinCount);
+    if (!analyserRef.current || !audioContextRef.current) return;
+
+    const sampleRate = audioContextRef.current.sampleRate;
+    const fftSize = analyserRef.current.fftSize;          // 2048
+    const binCount = analyserRef.current.frequencyBinCount; // 1024
+    const hzPerBin = sampleRate / fftSize;
+
+    const dataArray = new Uint8Array(binCount);
     analyserRef.current.getByteFrequencyData(dataArray);
-    const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
-    const level = Math.min(100, average * 1.5);
+
+    // Determine bins that correspond to speech formant range (300–3400 Hz)
+    const formantLowBin  = Math.floor(VOICE_FORMANT_LOW_HZ  / hzPerBin);
+    const formantHighBin = Math.min(binCount - 1, Math.ceil(VOICE_FORMANT_HIGH_HZ / hzPerBin));
+
+    let totalEnergy   = 0;
+    let formantEnergy = 0;
+
+    for (let i = 0; i < binCount; i++) {
+      totalEnergy += dataArray[i];
+      if (i >= formantLowBin && i <= formantHighBin) {
+        formantEnergy += dataArray[i];
+      }
+    }
+
+    // Visual audio level indicator (overall, unchanged UX)
+    const avgTotal = totalEnergy / binCount;
+    const level = Math.min(100, avgTotal * 1.5);
     setAudioLevel(level);
-    
-    // Detect suspicious audio (very loud or multiple voices - simplified detection)
-    if (level > 70) {
-      if (!suspiciousAudio) {
-        setSuspiciousAudio(true);
-        addWarning("Suspicious audio level detected");
+
+    // --- Voice classification ---
+    const formantBinCount  = formantHighBin - formantLowBin + 1;
+    const avgFormantEnergy = formantEnergy / formantBinCount;
+    const formantRatio     = totalEnergy > 0 ? formantEnergy / totalEnergy : 0;
+
+    // A frame is "voice" when:
+    //  1. Overall level is above silence floor
+    //  2. Average energy in the formant band is strong enough
+    //  3. Formant band dominates the full spectrum (not flat noise / high-freq hiss)
+    const isVoiceFrame =
+      level >= VOICE_MIN_OVERALL_LEVEL &&
+      avgFormantEnergy >= VOICE_MIN_FORMANT_ENERGY &&
+      formantRatio >= VOICE_FORMANT_RATIO_THRESHOLD;
+
+    const now = Date.now();
+
+    if (isVoiceFrame) {
+      // Start — or continue — tracking sustained voice
+      if (!voiceDetectionStartRef.current) {
+        voiceDetectionStartRef.current = now;
+      }
+
+      const voiceDuration = now - voiceDetectionStartRef.current;
+
+      if (voiceDuration >= VOICE_DETECTION_DURATION) {
+        // Voice sustained for required duration — check cooldown before warning
+        const cooldownPassed =
+          !lastAudioWarningRef.current ||
+          now - lastAudioWarningRef.current >= AUDIO_WARNING_COOLDOWN;
+
+        if (cooldownPassed) {
+          lastAudioWarningRef.current   = now;
+          voiceDetectionStartRef.current = null; // reset for next detection window
+          setSuspiciousAudio(true);
+          addWarning("Human voice detected during exam");
+          console.log(
+            `[PROCTORING-AUDIO] Human voice confirmed — ` +
+            `formantRatio=${formantRatio.toFixed(2)}, ` +
+            `avgFormantEnergy=${avgFormantEnergy.toFixed(1)}, ` +
+            `level=${level.toFixed(1)}`
+          );
+        }
       }
     } else {
-      setSuspiciousAudio(false);
+      // Non-voice frame — reset the sustained-voice timer
+      voiceDetectionStartRef.current = null;
+      if (suspiciousAudio) setSuspiciousAudio(false);
     }
   }, [suspiciousAudio, addWarning]);
 
@@ -512,11 +585,12 @@ export default function TakeExam() {
         micStreamRef.current = micStream;
         setMicEnabled(true);
         
-        // Set up audio analysis
+        // Set up audio analysis with 2048-bin FFT for voice frequency resolution
         audioContextRef.current = new AudioContext();
         const source = audioContextRef.current.createMediaStreamSource(micStream);
         analyserRef.current = audioContextRef.current.createAnalyser();
-        analyserRef.current.fftSize = 256;
+        analyserRef.current.fftSize = 2048;
+        analyserRef.current.smoothingTimeConstant = 0.5; // moderate smoothing for responsiveness
         source.connect(analyserRef.current);
       } catch (micErr) {
         console.warn('Microphone access denied:', micErr);
@@ -873,14 +947,14 @@ const handleSelect = (questionId: number, option: string) => {
                   {gazeStatus === 'center' ? 'OK' : gazeStatus === 'missing' ? 'No Face' : gazeStatus}
                 </div>
                 
-                {/* Mic Status */}
+                {/* Mic Status — shows voice detection state */}
                 {micEnabled && (
                   <div className={`${
-                    audioLevel < 30 ? 'bg-green-600' : 
-                    audioLevel > 70 ? 'bg-red-600' : 'bg-blue-600'
-                  } text-white text-xs px-2 py-1 flex items-center gap-1`}>
+                    suspiciousAudio ? 'bg-red-600' :
+                    audioLevel < 5   ? 'bg-green-600' : 'bg-green-600'
+                  } text-white text-xs px-2 py-1 flex items-center gap-1`} data-testid="status-mic-audio">
                     <Mic className="w-3 h-3" />
-                    {audioLevel.toFixed(0)}%
+                    {suspiciousAudio ? 'Voice!' : 'Listening'}
                   </div>
                 )}
                 

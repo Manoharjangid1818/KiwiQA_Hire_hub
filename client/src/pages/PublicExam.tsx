@@ -12,6 +12,15 @@ const MAX_WARNINGS = 5;
 const FACE_CHECK_INTERVAL = 3000;
 const FULLSCREEN_CHECK_INTERVAL = 1000;
 
+// Voice Activity Detection constants
+const VOICE_DETECTION_DURATION = 3000;
+const AUDIO_WARNING_COOLDOWN = 30000;
+const VOICE_FORMANT_LOW_HZ = 300;
+const VOICE_FORMANT_HIGH_HZ = 3400;
+const VOICE_MIN_FORMANT_ENERGY = 18;
+const VOICE_FORMANT_RATIO_THRESHOLD = 0.38;
+const VOICE_MIN_OVERALL_LEVEL = 10;
+
 let faceLandmarksDetection: any = null;
 let tf: any = null;
 let faceMesh: any = null;
@@ -110,6 +119,8 @@ export default function PublicExam() {
   const faceDetectedRef = useRef(true);
   const gazeStatusRef = useRef<"center" | "left" | "right" | "up" | "down" | "missing">("center");
   const noFaceTimeRef = useRef(0);
+  const voiceDetectionStartRef = useRef<number | null>(null);
+  const lastAudioWarningRef = useRef<number | null>(null);
 
   // Keep refs in sync
   useEffect(() => { answersRef.current = answers; }, [answers]);
@@ -290,16 +301,66 @@ export default function PublicExam() {
         audioContextRef.current = new AudioContext();
         const src = audioContextRef.current.createMediaStreamSource(mic);
         analyserRef.current = audioContextRef.current.createAnalyser();
-        analyserRef.current.fftSize = 256;
+        analyserRef.current.fftSize = 2048;
+        analyserRef.current.smoothingTimeConstant = 0.5;
         src.connect(analyserRef.current);
         const updateAudio = () => {
-          if (!analyserRef.current) return;
-          const data = new Uint8Array(analyserRef.current.frequencyBinCount);
+          if (!analyserRef.current || !audioContextRef.current) {
+            animationFrameRef.current = requestAnimationFrame(updateAudio);
+            return;
+          }
+          const sampleRate = audioContextRef.current.sampleRate;
+          const fftSize = analyserRef.current.fftSize;
+          const binCount = analyserRef.current.frequencyBinCount;
+          const hzPerBin = sampleRate / fftSize;
+
+          const data = new Uint8Array(binCount);
           analyserRef.current.getByteFrequencyData(data);
-          const avg = Math.min(100, (data.reduce((a, b) => a + b, 0) / data.length) * 1.5);
-          setAudioLevel(avg);
-          if (avg > 70 && !suspiciousAudio) { setSuspiciousAudio(true); addWarning("Suspicious audio detected"); }
-          else if (avg <= 70) setSuspiciousAudio(false);
+
+          const formantLowBin  = Math.floor(VOICE_FORMANT_LOW_HZ  / hzPerBin);
+          const formantHighBin = Math.min(binCount - 1, Math.ceil(VOICE_FORMANT_HIGH_HZ / hzPerBin));
+
+          let totalEnergy = 0;
+          let formantEnergy = 0;
+          for (let i = 0; i < binCount; i++) {
+            totalEnergy += data[i];
+            if (i >= formantLowBin && i <= formantHighBin) formantEnergy += data[i];
+          }
+
+          const avgTotal = totalEnergy / binCount;
+          const level = Math.min(100, avgTotal * 1.5);
+          setAudioLevel(level);
+
+          const formantBinCount  = formantHighBin - formantLowBin + 1;
+          const avgFormantEnergy = formantEnergy / formantBinCount;
+          const formantRatio     = totalEnergy > 0 ? formantEnergy / totalEnergy : 0;
+
+          const isVoiceFrame =
+            level >= VOICE_MIN_OVERALL_LEVEL &&
+            avgFormantEnergy >= VOICE_MIN_FORMANT_ENERGY &&
+            formantRatio >= VOICE_FORMANT_RATIO_THRESHOLD;
+
+          const now = Date.now();
+          if (isVoiceFrame) {
+            if (!voiceDetectionStartRef.current) voiceDetectionStartRef.current = now;
+            const voiceDuration = now - voiceDetectionStartRef.current;
+            if (voiceDuration >= VOICE_DETECTION_DURATION) {
+              const cooldownPassed =
+                !lastAudioWarningRef.current ||
+                now - lastAudioWarningRef.current >= AUDIO_WARNING_COOLDOWN;
+              if (cooldownPassed) {
+                lastAudioWarningRef.current   = now;
+                voiceDetectionStartRef.current = null;
+                setSuspiciousAudio(true);
+                addWarning("Human voice detected during exam");
+                console.log(`[PROCTORING-AUDIO] Human voice confirmed — formantRatio=${formantRatio.toFixed(2)}, avgFormantEnergy=${avgFormantEnergy.toFixed(1)}, level=${level.toFixed(1)}`);
+              }
+            }
+          } else {
+            voiceDetectionStartRef.current = null;
+            setSuspiciousAudio(false);
+          }
+
           animationFrameRef.current = requestAnimationFrame(updateAudio);
         };
         updateAudio();
@@ -317,7 +378,7 @@ export default function PublicExam() {
       setCameraEnabled(false);
       addWarning("Camera access denied");
     }
-  }, [capturePhoto, checkGaze, checkFullscreen, addWarning, suspiciousAudio]);
+  }, [capturePhoto, checkGaze, checkFullscreen, addWarning]);
 
   // Stop camera
   const stopCamera = useCallback(() => {
