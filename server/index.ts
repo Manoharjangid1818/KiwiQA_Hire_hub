@@ -62,44 +62,54 @@ app.use((req, res, next) => {
 });
 
 (async () => {
-  await registerRoutes(httpServer, app);
+  try {
+    await registerRoutes(httpServer, app);
 
-  app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
+    app.use((err: any, _req: Request, res: Response, next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
 
-    console.error("Internal Server Error:", err);
+      console.error("Internal Server Error:", err);
 
-    if (res.headersSent) {
-      return next(err);
+      if (res.headersSent) {
+        return next(err);
+      }
+
+      return res.status(status).json({ message });
+    });
+
+    // In production: serve pre-built static files.
+    // In development unified mode (Replit / npm run dev:unified): serve via Vite middleware.
+    // In development standalone mode (npm run dev:server): skip Vite — Vite runs separately.
+    if (process.env.NODE_ENV === "production") {
+      serveStatic(app);
+    } else if (process.env.SKIP_VITE !== "true") {
+      const { setupVite } = await import("./vite");
+      await setupVite(httpServer, app);
+    } else {
+      log("Vite middleware skipped — frontend served by separate Vite dev server");
     }
 
-    return res.status(status).json({ message });
-  });
+    // Use PORT from environment (Render sets this automatically).
+    // Default to 10000 for local dev if PORT is not set — avoids conflicts with other local services.
+    const port = parseInt(process.env.PORT || "10000", 10);
+    httpServer.listen(
+      {
+        port,
+        host: "0.0.0.0",
+        reusePort: true,
+      },
+      () => {
+        log(`serving on port ${port}`);
+      },
+    );
 
-  // In production: serve pre-built static files.
-  // In development unified mode (Replit / npm run dev:unified): serve via Vite middleware.
-  // In development standalone mode (npm run dev:server): skip Vite — Vite runs separately.
-  if (process.env.NODE_ENV === "production") {
-    serveStatic(app);
-  } else if (process.env.SKIP_VITE !== "true") {
-    const { setupVite } = await import("./vite");
-    await setupVite(httpServer, app);
-  } else {
-    log("Vite middleware skipped — frontend served by separate Vite dev server");
+    httpServer.on("error", (err: NodeJS.ErrnoException) => {
+      console.error(`[SERVER] Failed to start on port ${process.env.PORT || 10000}:`, err.message);
+      process.exit(1);
+    });
+  } catch (err) {
+    console.error("[SERVER] Fatal startup error:", err);
+    process.exit(1);
   }
-
-  // Use PORT from environment (Render sets this automatically).
-  // Default to 10000 for local dev if PORT is not set — avoids conflicts with other local services.
-  const port = parseInt(process.env.PORT || "10000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
 })();
