@@ -17,13 +17,19 @@ const AUDIO_CHECK_INTERVAL = 5000; // 5 seconds
 const FULLSCREEN_CHECK_INTERVAL = 1000; // 1 second
 
 // Voice Activity Detection constants
-const VOICE_DETECTION_DURATION = 3000;  // ms of sustained voice before warning
+const VOICE_DETECTION_DURATION = 2500;  // ms of sustained voice before warning (2.5s)
 const AUDIO_WARNING_COOLDOWN = 30000;   // ms between successive audio warnings
-const VOICE_FORMANT_LOW_HZ = 300;       // lower bound of primary speech formants
-const VOICE_FORMANT_HIGH_HZ = 3400;     // upper bound of primary speech formants
-const VOICE_MIN_FORMANT_ENERGY = 18;    // minimum avg formant bin energy (0-255)
-const VOICE_FORMANT_RATIO_THRESHOLD = 0.38; // formant energy / total energy to classify as voice
-const VOICE_MIN_OVERALL_LEVEL = 10;     // minimum overall level to avoid triggering on silence
+// Primary speech formant range (F1–F3) — covers vowel / consonant resonances
+const VOICE_FORMANT_LOW_HZ = 300;
+const VOICE_FORMANT_HIGH_HZ = 3400;
+// Fundamental frequency (F0) range — unique to voiced human speech
+const VOICE_FUNDAMENTAL_LOW_HZ = 85;
+const VOICE_FUNDAMENTAL_HIGH_HZ = 255;
+const VOICE_MIN_FUNDAMENTAL_ENERGY = 10; // avg energy required in F0 band
+const VOICE_MIN_FORMANT_ENERGY = 22;    // minimum avg formant bin energy (0-255)
+const VOICE_FORMANT_RATIO_THRESHOLD = 0.42; // formant energy / total energy ratio
+const VOICE_MIN_OVERALL_LEVEL = 12;     // minimum overall level to avoid silence triggers
+const VOICE_RESET_GAP_MS = 400;         // brief gap allowed before resetting voice timer
 
 // TensorFlow.js and face detection imports - loaded dynamically
 let faceLandmarksDetection: any = null;
@@ -131,6 +137,7 @@ export default function TakeExam() {
   // Voice Activity Detection refs
   const voiceDetectionStartRef = useRef<number | null>(null); // when sustained voice started
   const lastAudioWarningRef = useRef<number | null>(null);    // last time an audio warning fired
+  const lastNonVoiceTimeRef = useRef<number | null>(null);    // last time a non-voice frame was seen
 
   // Refs for use in closures
   const answersRef = useRef<Record<number, string>>({});
@@ -387,49 +394,59 @@ export default function TakeExam() {
     if (!analyserRef.current || !audioContextRef.current) return;
 
     const sampleRate = audioContextRef.current.sampleRate;
-    const fftSize = analyserRef.current.fftSize;          // 2048
+    const fftSize = analyserRef.current.fftSize;           // 2048
     const binCount = analyserRef.current.frequencyBinCount; // 1024
     const hzPerBin = sampleRate / fftSize;
 
     const dataArray = new Uint8Array(binCount);
     analyserRef.current.getByteFrequencyData(dataArray);
 
-    // Determine bins that correspond to speech formant range (300–3400 Hz)
+    // Bin ranges for F0 (fundamental frequency — 85–255 Hz, unique to voiced speech)
+    const f0LowBin  = Math.floor(VOICE_FUNDAMENTAL_LOW_HZ  / hzPerBin);
+    const f0HighBin = Math.min(binCount - 1, Math.ceil(VOICE_FUNDAMENTAL_HIGH_HZ / hzPerBin));
+
+    // Bin ranges for speech formants F1–F3 (300–3400 Hz)
     const formantLowBin  = Math.floor(VOICE_FORMANT_LOW_HZ  / hzPerBin);
     const formantHighBin = Math.min(binCount - 1, Math.ceil(VOICE_FORMANT_HIGH_HZ / hzPerBin));
 
-    let totalEnergy   = 0;
-    let formantEnergy = 0;
+    let totalEnergy      = 0;
+    let f0Energy         = 0;
+    let formantEnergy    = 0;
 
     for (let i = 0; i < binCount; i++) {
       totalEnergy += dataArray[i];
-      if (i >= formantLowBin && i <= formantHighBin) {
-        formantEnergy += dataArray[i];
-      }
+      if (i >= f0LowBin && i <= f0HighBin) f0Energy += dataArray[i];
+      if (i >= formantLowBin && i <= formantHighBin) formantEnergy += dataArray[i];
     }
 
-    // Visual audio level indicator (overall, unchanged UX)
+    // Visual audio level indicator (overall)
     const avgTotal = totalEnergy / binCount;
     const level = Math.min(100, avgTotal * 1.5);
     setAudioLevel(level);
 
-    // --- Voice classification ---
+    // --- Multi-band human voice classification ---
+    const f0BinCount       = f0HighBin - f0LowBin + 1;
     const formantBinCount  = formantHighBin - formantLowBin + 1;
+    const avgF0Energy      = f0Energy / f0BinCount;
     const avgFormantEnergy = formantEnergy / formantBinCount;
     const formantRatio     = totalEnergy > 0 ? formantEnergy / totalEnergy : 0;
 
-    // A frame is "voice" when:
-    //  1. Overall level is above silence floor
-    //  2. Average energy in the formant band is strong enough
-    //  3. Formant band dominates the full spectrum (not flat noise / high-freq hiss)
+    // A frame is classified as human voice ONLY when all three conditions hold:
+    //  1. Overall level above silence floor (avoids triggering on quiet hiss)
+    //  2. Energy in the F0 band (85–255 Hz) — fan / AC noise lacks this
+    //  3. Formant band (300–3400 Hz) strong AND dominant in spectrum
+    //     (music / noise tends to spread energy more evenly across all bins)
     const isVoiceFrame =
       level >= VOICE_MIN_OVERALL_LEVEL &&
+      avgF0Energy >= VOICE_MIN_FUNDAMENTAL_ENERGY &&
       avgFormantEnergy >= VOICE_MIN_FORMANT_ENERGY &&
       formantRatio >= VOICE_FORMANT_RATIO_THRESHOLD;
 
     const now = Date.now();
 
     if (isVoiceFrame) {
+      lastNonVoiceTimeRef.current = null;
+
       // Start — or continue — tracking sustained voice
       if (!voiceDetectionStartRef.current) {
         voiceDetectionStartRef.current = now;
@@ -438,27 +455,33 @@ export default function TakeExam() {
       const voiceDuration = now - voiceDetectionStartRef.current;
 
       if (voiceDuration >= VOICE_DETECTION_DURATION) {
-        // Voice sustained for required duration — check cooldown before warning
         const cooldownPassed =
           !lastAudioWarningRef.current ||
           now - lastAudioWarningRef.current >= AUDIO_WARNING_COOLDOWN;
 
         if (cooldownPassed) {
-          lastAudioWarningRef.current   = now;
-          voiceDetectionStartRef.current = null; // reset for next detection window
+          lastAudioWarningRef.current    = now;
+          voiceDetectionStartRef.current = null;
           setSuspiciousAudio(true);
           addWarning("Human voice detected during exam");
           console.log(
             `[PROCTORING-AUDIO] Human voice confirmed — ` +
+            `f0=${avgF0Energy.toFixed(1)}, ` +
             `formantRatio=${formantRatio.toFixed(2)}, ` +
-            `avgFormantEnergy=${avgFormantEnergy.toFixed(1)}, ` +
+            `avgFormant=${avgFormantEnergy.toFixed(1)}, ` +
             `level=${level.toFixed(1)}`
           );
         }
       }
     } else {
-      // Non-voice frame — reset the sustained-voice timer
-      voiceDetectionStartRef.current = null;
+      // Allow a small gap before fully resetting the voice timer
+      // This prevents brief silent moments in speech from breaking the detection
+      if (!lastNonVoiceTimeRef.current) {
+        lastNonVoiceTimeRef.current = now;
+      } else if (now - lastNonVoiceTimeRef.current > VOICE_RESET_GAP_MS) {
+        voiceDetectionStartRef.current = null;
+        lastNonVoiceTimeRef.current = null;
+      }
       if (suspiciousAudio) setSuspiciousAudio(false);
     }
   }, [suspiciousAudio, addWarning]);

@@ -48,6 +48,8 @@ Email: `admin@kiwiqa.com` / Password: `admin123` (seeded on first run)
 - Dashboard with stats: Total Exams, Active Exams, Total Candidates, Pending Re-exam Requests
 - Tabs: Manage Exams | Candidates | Re-exam Requests | Download Results | Proctoring Logs
 - Create/edit/delete/copy/enable-disable exams
+- **CSV Validation**: Exam cannot be created unless a valid CSV with at least 1 question is uploaded
+- **Edit Exam CSV Upload**: In ManageExam page, "Upload Questions via CSV" merges new questions into existing ones
 - Manual MCQ creation + CSV upload (up to 200 questions)
 - AI question generation via Gemini
 - Token-based exam links with open/start/complete tracking
@@ -60,10 +62,16 @@ Email: `admin@kiwiqa.com` / Password: `admin123` (seeded on first run)
 ### Student
 - Exam list (only enabled exams shown)
 - Full proctoring during exam: webcam, microphone, face detection, tab-switch detection, devtools detection, screen resize detection
+- **Enhanced Audio VAD**: Multi-band voice detection (F0 85–255Hz + formant 300–3400Hz) ignores fan/AC/music, triggers only on continuous human speech (2.5s)
 - Warning system (up to MAX_WARNINGS, then auto-submit)
 - View results, pass/fail status
 - Request re-exam after completion
 - **Coding Test** (`/student/coding/:examId`): Monaco Editor environment with Run/Submit per question, multi-language support, anti-cheat (tab switch, resize, devtools warnings), output panel
+
+### UI / Theme
+- **Dark/Light Mode toggle** in Navbar (all protected pages) — persisted to localStorage
+- `ThemeProvider` in `client/src/hooks/use-theme.tsx` wraps entire app via App.tsx
+- CSS variables defined in `index.css` for both `:root` (light) and `.dark` class scopes
 
 ## Database Tables
 

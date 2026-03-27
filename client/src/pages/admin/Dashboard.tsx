@@ -180,10 +180,42 @@ export default function AdminDashboard() {
     }
   };
 
+  // Validate CSV file content — returns error string or null if valid
+  const validateCsvContent = (file: File): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        if (!text || !text.trim()) {
+          resolve("The CSV file is empty. Please upload a file containing at least 1 question.");
+          return;
+        }
+        const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+        // Check if there is at least 1 data row (skip header if present)
+        const dataLines = lines.filter(l => {
+          const cols = l.split(",");
+          return cols.length >= 6 && cols[0].trim() && !cols[0].trim().toLowerCase().startsWith("question");
+        });
+        if (dataLines.length === 0) {
+          resolve("The CSV contains no valid questions. Ensure at least 1 row with: question, optionA, optionB, optionC, optionD, correctAnswer, marks");
+          return;
+        }
+        resolve(null);
+      };
+      reader.onerror = () => resolve("Failed to read the CSV file. Please try again.");
+      reader.readAsText(file);
+    });
+  };
+
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!csvFile) {
       toast({ title: "CSV Required", description: "Please upload a CSV file with questions before creating an exam.", variant: "destructive" });
+      return;
+    }
+    const csvError = await validateCsvContent(csvFile);
+    if (csvError) {
+      toast({ title: "Invalid CSV", description: csvError, variant: "destructive" });
       return;
     }
     try {
@@ -254,10 +286,14 @@ export default function AdminDashboard() {
   const handleCreateWithCsv = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!csvFile) {
-      toast({ title: "Error", description: "Please select a CSV file first", variant: "destructive" });
+      toast({ title: "CSV Required", description: "Please select a CSV file first.", variant: "destructive" });
       return;
     }
-    
+    const csvError = await validateCsvContent(csvFile);
+    if (csvError) {
+      toast({ title: "Invalid CSV", description: csvError, variant: "destructive" });
+      return;
+    }
     try {
       const examData = {
         title: newExam.title,

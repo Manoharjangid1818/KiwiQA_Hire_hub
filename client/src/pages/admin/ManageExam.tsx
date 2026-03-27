@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRoute, Link } from "wouter";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { useExam } from "@/hooks/use-exams";
@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, ArrowLeft, Plus, Trash2, HelpCircle, Code2 } from "lucide-react";
+import { Loader2, ArrowLeft, Plus, Trash2, HelpCircle, Code2, Upload, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -64,6 +64,12 @@ export default function ManageExam() {
   });
   const [isCreatingCoding, setIsCreatingCoding] = useState(false);
   const [isDeletingCoding, setIsDeletingCoding] = useState<number | null>(null);
+
+  // CSV upload state (for adding questions while editing)
+  const [csvUploadFile, setCsvUploadFile] = useState<File | null>(null);
+  const [csvUploading, setCsvUploading] = useState(false);
+  const [showCsvSection, setShowCsvSection] = useState(false);
+  const csvFileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: codingQuestions = [], isLoading: loadingCoding } = useQuery<CodingQuestion[]>({
     queryKey: [`/api/exams/${examId}/coding-questions`],
@@ -128,6 +134,76 @@ export default function ManageExam() {
     }
   };
 
+  // Validate CSV has at least 1 question
+  const validateCsvContent = (file: File): Promise<string | null> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const text = e.target?.result as string;
+        if (!text || !text.trim()) {
+          resolve("The CSV file is empty. Please upload a file with at least 1 question.");
+          return;
+        }
+        const lines = text.trim().split(/\r?\n/).filter(l => l.trim());
+        const dataLines = lines.filter(l => {
+          const cols = l.split(",");
+          return cols.length >= 6 && cols[0].trim() && !cols[0].trim().toLowerCase().startsWith("question");
+        });
+        if (dataLines.length === 0) {
+          resolve("No valid questions found. Format: question, optionA, optionB, optionC, optionD, correctAnswer, marks");
+          return;
+        }
+        resolve(null);
+      };
+      reader.onerror = () => resolve("Failed to read the CSV file.");
+      reader.readAsText(file);
+    });
+  };
+
+  // Handle CSV upload for adding questions to existing exam
+  const handleCsvUpload = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!csvUploadFile) {
+      toast({ title: "No File Selected", description: "Please select a CSV file to upload.", variant: "destructive" });
+      return;
+    }
+    const csvError = await validateCsvContent(csvUploadFile);
+    if (csvError) {
+      toast({ title: "Invalid CSV", description: csvError, variant: "destructive" });
+      return;
+    }
+    setCsvUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", csvUploadFile);
+      formData.append("examId", examId.toString());
+      const token = localStorage.getItem("kiwiqa_token");
+      const response = await fetch("/api/admin/upload-questions", {
+        method: "POST",
+        headers: { "Authorization": `Bearer ${token}` },
+        body: formData
+      });
+      const result = await response.json();
+      if (response.ok) {
+        const count = result.totalInserted ?? result.inserted ?? 0;
+        toast({
+          title: "Questions Uploaded",
+          description: count ? `Successfully added ${count} question(s) to this exam.` : "Questions uploaded successfully."
+        });
+        await queryClient.invalidateQueries({ queryKey: [`/api/exams/${examId}`] });
+        setCsvUploadFile(null);
+        setShowCsvSection(false);
+        if (csvFileInputRef.current) csvFileInputRef.current.value = "";
+      } else {
+        toast({ title: "Upload Failed", description: result.message || "Failed to upload questions.", variant: "destructive" });
+      }
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message || "Failed to upload CSV.", variant: "destructive" });
+    } finally {
+      setCsvUploading(false);
+    }
+  };
+
   if (isLoading) return <ProtectedRoute requireRole="admin"><div className="text-center py-20"><Loader2 className="w-8 h-8 animate-spin mx-auto text-primary" /></div></ProtectedRoute>;
   if (!exam) return <ProtectedRoute requireRole="admin"><div>Exam not found</div></ProtectedRoute>;
 
@@ -166,13 +242,79 @@ export default function ManageExam() {
 
           {/* MCQ Questions Tab */}
           <TabsContent value="mcq">
-            <div className="flex justify-end mb-4">
+            <div className="flex justify-end gap-3 mb-4 flex-wrap">
               {!isFormOpen && (
-                <Button onClick={() => setIsFormOpen(true)} className="rounded-xl shadow-md h-11 px-6" data-testid="button-add-question">
+                <Button
+                  variant="outline"
+                  onClick={() => { setShowCsvSection(v => !v); setIsFormOpen(false); }}
+                  className="rounded-xl h-11 px-6"
+                  data-testid="button-upload-csv-questions"
+                >
+                  <Upload className="w-4 h-4 mr-2" /> Upload Questions via CSV
+                </Button>
+              )}
+              {!isFormOpen && (
+                <Button onClick={() => { setIsFormOpen(true); setShowCsvSection(false); }} className="rounded-xl shadow-md h-11 px-6" data-testid="button-add-question">
                   <Plus className="w-4 h-4 mr-2" /> Add MCQ Question
                 </Button>
               )}
             </div>
+
+            {/* CSV Upload Section */}
+            {showCsvSection && (
+              <Card className="border-primary/30 shadow-md rounded-3xl mb-6">
+                <CardHeader className="bg-slate-50 dark:bg-slate-900/50 rounded-t-3xl border-b border-border/50">
+                  <CardTitle className="text-lg flex items-center gap-2">
+                    <Upload className="w-5 h-5 text-primary" /> Upload Questions via CSV
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6">
+                  <form onSubmit={handleCsvUpload} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="font-semibold">CSV File <span className="text-destructive">*</span></Label>
+                      <Input
+                        ref={csvFileInputRef}
+                        type="file"
+                        accept=".csv"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) setCsvUploadFile(f); }}
+                        className="h-12 rounded-xl"
+                        data-testid="input-csv-upload-edit"
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Format: question, optionA, optionB, optionC, optionD, correctAnswer, marks
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        New questions will be <strong>merged</strong> with existing questions.
+                      </p>
+                      {csvUploadFile && (
+                        <p className="text-xs text-green-600 flex items-center gap-1">
+                          <CheckCircle2 className="w-3.5 h-3.5" /> {csvUploadFile.name} selected
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex gap-3 justify-end pt-2 border-t border-border/50">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        onClick={() => { setShowCsvSection(false); setCsvUploadFile(null); if (csvFileInputRef.current) csvFileInputRef.current.value = ""; }}
+                        className="rounded-xl px-6"
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        type="submit"
+                        disabled={csvUploading || !csvUploadFile}
+                        className="rounded-xl px-8 shadow-md"
+                        data-testid="button-submit-csv-upload"
+                      >
+                        {csvUploading ? <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Uploading...</> : <><Upload className="w-4 h-4 mr-2" /> Upload & Merge Questions</>}
+                      </Button>
+                    </div>
+                  </form>
+                </CardContent>
+              </Card>
+            )}
+
 
             {isFormOpen && (
               <Card className="border-primary/30 shadow-lg shadow-primary/5 rounded-3xl mb-6">
