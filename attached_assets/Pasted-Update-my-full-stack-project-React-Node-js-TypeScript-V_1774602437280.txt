@@ -1,0 +1,135 @@
+Update my full-stack project (React + Node.js + TypeScript + Vite + Drizzle ORM) so that it can run **locally in VS Code without relying on Replit**.
+
+---
+
+## 🎯 GOAL
+
+Make the project fully runnable on a local machine using:
+
+* VS Code
+* Node.js
+* PostgreSQL (local or cloud)
+* No Replit-specific dependencies
+
+---
+
+## ⚠️ REMOVE REPLIT DEPENDENCIES
+
+* Remove any usage of:
+
+  * Replit-specific environment variables
+  * `.replit` config
+  * Replit database or secrets
+  * Replit-specific ports or scripts
+* Ensure app does NOT depend on Replit runtime
+
+---
+
+## 🔧 ENVIRONMENT SETUP
+
+* Create a `.env.example` file with:
+  DATABASE_URL=
+  NODE_ENV=development
+  PORT=5000
+  SMTP_HOST=
+  SMTP_PORT=
+  SMTP_USER=
+  SMTP_PASS=
+
+* Update code to use:
+  process.env.VARIABLE_NAME
+
+* Ensure dotenv is configured in backend
+
+---
+
+## 🗄️ DATABASE CONFIG
+
+* Ensure database connection uses:
+  process.env.DATABASE_URL
+
+* Support both:
+
+  * Local PostgreSQL
+  * Cloud (Render / Neon)
+
+* Add fallback instructions in README
+
+---
+
+## 📦 PACKAGE & SCRIPTS
+
+Ensure package.json includes:
+
+"scripts": {
+"dev": "concurrently "npm run dev:server" "npm run dev:client"",
+"dev:server": "tsx server/index.ts",
+"dev:client": "vite",
+"build": "vite build && tsx script/build.ts",
+"start": "node dist/index.js"
+}
+
+* Install required dependencies:
+  concurrently, dotenv
+
+---
+
+## 🌐 SERVER CONFIG
+
+* Ensure server runs on:
+  process.env.PORT || 5000
+* Remove hardcoded ports
+
+---
+
+## 📁 PROJECT STRUCTURE CLEANUP
+
+* Ensure proper separation:
+  /client → frontend
+  /server → backend
+
+* Fix import paths if broken
+
+---
+
+## ⚙️ FRONTEND CONFIG
+
+* Ensure Vite config works locally
+* Proxy API requests to backend (localhost:5000)
+
+---
+
+## 📄 README UPDATE
+
+Add clear instructions:
+
+1. Clone repo
+2. Run:
+   npm install
+3. Create `.env` file
+4. Run:
+   npm run dev
+
+---
+
+## 🧪 FINAL TEST
+
+* App runs with:
+  npm run dev
+* Frontend + backend both work
+* No dependency on Replit
+
+---
+
+## 🚀 OUTPUT REQUIRED
+
+* Updated project structure
+* Working scripts
+* .env.example file
+* README instructions
+
+---
+
+## 🎯 FINAL RESULT
+
+Project runs smoothly in VS Code locally just like a production-ready app.
