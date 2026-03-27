@@ -9,7 +9,7 @@
     "dev:local": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
     "dev:server": "SKIP_VITE=true tsx server/index.ts",
     "dev:client": "vite --config vite.config.ts",
-    "build": "vite build && tsx script/build.ts",
+    "build": "tsx script/build.ts",
     "build:client": "vite build",
     "preview": "vite preview",
     "deploy": "gh-pages -d dist",
