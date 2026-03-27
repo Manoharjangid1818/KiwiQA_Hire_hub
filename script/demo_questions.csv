@@ -1,0 +1,51 @@
+question,optionA,optionB,optionC,optionD,correctAnswer,marks
+What does HTML stand for?,HyperText Markup Language,High Transfer Markup Language,HyperText Machine Language,Hyperlink and Text Markup Language,A,1
+Which CSS property changes text color?,color,font-color,text-color,foreground,A,1
+What is the correct syntax for a JavaScript function?,function myFunc() {},def myFunc():,func myFunc() {},void myFunc() {},A,1
+Which data structure uses LIFO order?,Stack,Queue,Array,Tree,A,1
+What does SQL stand for?,Structured Query Language,Simple Query Language,Sequential Query Language,Standard Query Language,A,1
+Which HTTP method is used to create a resource?,POST,GET,PUT,DELETE,A,1
+What is the time complexity of binary search?,O(log n),O(n),O(n squared),O(1),A,1
+What does OOP stand for?,Object-Oriented Programming,Object-Operator Process,Open-Oriented Protocol,Object-Oriented Protocol,A,1
+Which operator checks strict equality in JavaScript?,===,==,!=,=,A,1
+What is a primary key in a database?,A unique identifier for each row,A key used to sort data,A foreign key reference,A backup key,A,1
+Which HTML tag creates a hyperlink?,Anchor tag - a,Link tag,Href tag,Url tag,A,1
+What does RAM stand for?,Random Access Memory,Read Access Memory,Remote Access Memory,Rapid Access Memory,A,1
+Which sorting algorithm has O(n log n) average complexity?,Merge Sort,Bubble Sort,Selection Sort,Insertion Sort,A,1
+What is a RESTful API?,An API following REST architectural principles,A real-time streaming API,A relational database API,A remote execution API,A,1
+What does CSS stand for?,Cascading Style Sheets,Computer Style Sheets,Colorful Style Sheets,Creative Style Sheets,A,1
+Which Python keyword defines a class?,class,def,type,object,A,1
+What is the default HTTP port?,80,443,8080,3000,A,1
+Which data type stores true or false values?,Boolean,Integer,String,Float,A,1
+What does API stand for?,Application Programming Interface,Advanced Programming Interface,Automated Process Integration,Application Protocol Interface,A,1
+In Git what command creates a new branch?,git checkout -b branchname,git branch new,git create branch,git new branch,A,1
+What is a null pointer?,A pointer that references memory address zero,A pointer with no name,An empty array,A deleted variable,A,1
+Which CSS property sets the background color?,background-color,color,fill,bg-color,A,1
+What does JSON stand for?,JavaScript Object Notation,Java Standard Object Notation,JavaScript Ordered Notation,Java Serialized Object Notation,A,1
+Which React hook is used for state management?,useState,useEffect,useRef,useContext,A,1
+What is the purpose of a constructor in OOP?,To initialize an object when it is created,To destroy an object,To copy an object,To sort an object,A,1
+Which command runs a Node.js file?,node filename.js,run filename.js,execute filename.js,start filename.js,A,1
+What is a closure in JavaScript?,A function that has access to its outer scope,A sealed class,A private method,An async function,A,1
+What does URL stand for?,Uniform Resource Locator,Universal Resource Locator,Uniform Resource Link,Unified Reference Locator,A,1
+Which HTML5 tag is used to embed video?,video,media,film,player,A,1
+What is an algorithm?,A step-by-step procedure to solve a problem,A programming language,A type of database,A computer hardware component,A,1
+What does IDE stand for?,Integrated Development Environment,International Development Environment,Intelligent Data Engine,Integrated Data Exchange,A,1
+Which keyword declares a constant in JavaScript?,const,let,var,fix,A,1
+What is a foreign key in a database?,A key that references a primary key in another table,A key used for encryption,A primary key backup,An index key,A,1
+Which Python function returns the length of a list?,len(),length(),size(),count(),A,1
+What is the purpose of a database index?,To speed up data retrieval queries,To store backup data,To encrypt data,To sort columns automatically,A,1
+What does async/await help with in JavaScript?,Handling asynchronous operations more cleanly,Running code faster,Preventing all errors,Creating new threads,A,1
+Which HTML tag defines a table row?,tr,td,th,row,A,1
+What is polymorphism in OOP?,The ability of objects to take many forms,Multiple inheritance,Code reuse through classes,Object cloning,A,1
+Which protocol secures HTTPS connections?,TLS/SSL,HTTP,FTP,SSH,A,1
+What order does a queue data structure follow?,FIFO - First In First Out,LIFO - Last In First Out,FILO - First In Last Out,LILO - Last In Last Out,A,1
+What does CI/CD stand for?,Continuous Integration and Continuous Deployment,Computer Interface and Code Deployment,Compiled Interface and Code Delivery,Continuous Iteration and Code Design,A,1
+Which CSS unit is relative to the viewport width?,vw,px,em,rem,A,1
+What is inheritance in OOP?,A class acquiring properties and methods of another class,Deleting unused code,Copying a variable,Hiding class members,A,1
+Which HTTP status code means Not Found?,404,200,500,301,A,1
+What does the git commit command do?,Saves changes to the local repository,Uploads changes to remote server,Creates a new branch,Deletes a branch,A,1
+Which Python library is commonly used for data analysis?,pandas,numpy,matplotlib,requests,A,1
+What is encapsulation in OOP?,Bundling data and methods together in a single unit,Making all methods public,Inheriting from a base class,Creating abstract classes only,A,1
+What does MVC stand for?,Model View Controller,Multiple View Container,Master View Configuration,Model Value Component,A,1
+Which command installs a package in a Node.js project?,npm install packagename,npm add packagename,node install packagename,npm setup packagename,A,1
+What is a hash table?,A data structure that maps keys to values using a hash function,A sorted linked list,A type of binary tree,A two-dimensional array,A,1
