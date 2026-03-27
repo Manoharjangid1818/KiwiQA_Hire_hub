@@ -87,10 +87,19 @@ npm run db:push
 
 ### Running the App
 
+**Option 1 — Unified mode** (single terminal, everything on port 5000):
 ```bash
-# Development (starts on port 5000)
 npm run dev
+```
+Visit `http://localhost:5000`. Frontend and API are both served from the same port.
 
+**Option 2 — Split mode** (recommended for VS Code local dev):
+```bash
+npm run dev:local
+```
+This starts the backend on `http://localhost:5000` and the Vite frontend on `http://localhost:5173` simultaneously. Vite automatically proxies `/api` requests to the backend.
+
+```bash
 # Production build
 npm run build
 
@@ -129,14 +138,15 @@ On first run, a default admin is seeded:
 
 ## Deployment
 
-### Replit (Recommended)
-This project is configured to run on Replit. Click the **Deploy** button in the Replit interface to publish.
+### VS Code / Local Machine
+Follow the [Getting Started](#getting-started) steps above. The app runs entirely locally — no cloud account required.
 
-### Manual / VPS
+### Render / Railway / VPS
 ```bash
 npm run build
 NODE_ENV=production npm start
 ```
+Set all environment variables from `.env.example` in your hosting dashboard. Use a cloud PostgreSQL service (Render, Neon, Supabase, etc.) for `DATABASE_URL`.
 
 ### GitHub Pages (Frontend only)
 > Note: GitHub Pages only hosts static files. The backend must be hosted separately.

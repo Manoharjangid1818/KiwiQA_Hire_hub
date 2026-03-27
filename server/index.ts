@@ -77,14 +77,16 @@ app.use((req, res, next) => {
     return res.status(status).json({ message });
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // In production: serve pre-built static files.
+  // In development unified mode (Replit / npm run dev:unified): serve via Vite middleware.
+  // In development standalone mode (npm run dev:server): skip Vite — Vite runs separately.
   if (process.env.NODE_ENV === "production") {
     serveStatic(app);
-  } else {
+  } else if (process.env.SKIP_VITE !== "true") {
     const { setupVite } = await import("./vite");
     await setupVite(httpServer, app);
+  } else {
+    log("Vite middleware skipped — frontend served by separate Vite dev server");
   }
 
   // ALWAYS serve the app on the port specified in the environment variable PORT
