@@ -18,7 +18,13 @@ import csv from "csv-parser";
 import fs from "fs";
 import path from "path";
 
-const JWT_SECRET = process.env.JWT_SECRET || "super_secret_kiwiqa_key_for_dev";
+if (!process.env.JWT_SECRET && process.env.NODE_ENV === "production") {
+  throw new Error("JWT_SECRET is not set. Set it as an environment variable before starting in production.");
+}
+if (!process.env.JWT_SECRET) {
+  console.warn("[WARN] JWT_SECRET is not set — using insecure fallback. Set JWT_SECRET in your .env file.");
+}
+const JWT_SECRET = process.env.JWT_SECRET || "super_secret_kiwiqa_key_for_dev_only";
 
 // Configure multer for file uploads
 const uploadsDir = path.join(process.cwd(), "uploads");
