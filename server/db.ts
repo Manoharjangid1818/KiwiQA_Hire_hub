@@ -39,4 +39,19 @@ export const pool = new Pool({
   }),
 });
 
+// Log unhandled pool errors so they appear in Render logs instead of crashing silently
+pool.on("error", (err) => {
+  console.error("[DB] Unexpected pool error:", err.message);
+});
+
+// Verify the connection is reachable on startup
+pool.connect((err, client, release) => {
+  if (err) {
+    console.error("[DB] Connection failed:", err.message);
+  } else {
+    console.log("[DB] Connection verified successfully");
+    release();
+  }
+});
+
 export const db = drizzle(pool, { schema });
