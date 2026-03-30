@@ -5,7 +5,7 @@
   "license": "MIT",
   "homepage": "https://manoharjangid1818.github.io/KiwiQA_Hire_hub",
   "scripts": {
-    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev": "tsx server/index.ts",
     "dev:server": "tsx server/index.ts",
     "dev:client": "vite --config vite.config.ts",
     "build": "npm run build:client",
@@ -55,6 +55,7 @@
     "dotenv": "^17.3.1",
     "drizzle-kit": "^0.31.10",
     "drizzle-orm": "^0.45.2",
+    "drizzle-zod": "^0.8.3",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "jsonwebtoken": "^9.0.3",
