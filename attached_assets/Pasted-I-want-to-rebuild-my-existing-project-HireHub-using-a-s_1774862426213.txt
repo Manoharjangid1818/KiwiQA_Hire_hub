@@ -1,0 +1,147 @@
+I want to rebuild my existing project "HireHub" using a simpler and production-ready stack.
+
+Current project:
+- React (Vite) frontend
+- Node.js + Express backend
+- PostgreSQL database
+- Facing issues in running and deployment
+
+Goal:
+Convert this into a full-stack app using:
+- Next.js (frontend + backend in one)
+- Supabase (authentication + database)
+
+----------------------------------------
+1. PROJECT SETUP
+----------------------------------------
+
+- Use Next.js (latest version with App Router)
+- Use Supabase for:
+  - Authentication
+  - Database
+- Use Tailwind CSS for styling
+
+----------------------------------------
+2. FEATURES TO IMPLEMENT
+----------------------------------------
+
+This is a Job Hiring Platform.
+
+Core features:
+
+1. Authentication (Supabase)
+- User signup/login
+- Logout
+- Store user session
+- Protect routes (only logged-in users access dashboard)
+
+2. User Roles
+- Candidate
+- Recruiter
+
+----------------------------------------
+3. DATABASE DESIGN (Supabase)
+----------------------------------------
+
+Tables:
+
+1. users
+- id
+- email
+- role (candidate/recruiter)
+- created_at
+
+2. jobs
+- id
+- title
+- description
+- company
+- created_by (userId)
+- created_at
+
+3. applications
+- id
+- job_id
+- user_id
+- status (applied/rejected/selected)
+- created_at
+
+----------------------------------------
+4. PAGES (Next.js App Router)
+----------------------------------------
+
+- /login → login page
+- /register → signup page
+- /dashboard → main dashboard
+- /jobs → list all jobs
+- /jobs/[id] → job details page
+- /post-job → recruiter posts job
+
+----------------------------------------
+5. FUNCTIONALITY
+----------------------------------------
+
+Candidate:
+- View jobs
+- Apply to job
+
+Recruiter:
+- Post job
+- View applications
+
+----------------------------------------
+6. SUPABASE INTEGRATION
+----------------------------------------
+
+- Setup Supabase client
+- Use Supabase auth (email/password)
+- Use Supabase database (CRUD operations)
+
+----------------------------------------
+7. UI REQUIREMENTS
+----------------------------------------
+
+- Clean modern UI
+- Tailwind CSS
+- Responsive design
+
+----------------------------------------
+8. PROJECT STRUCTURE
+----------------------------------------
+
+app/
+  login/
+  register/
+  dashboard/
+  jobs/
+  post-job/
+
+lib/
+  supabaseClient.js
+
+components/
+  Navbar.js
+  JobCard.js
+
+----------------------------------------
+9. DEPLOYMENT
+----------------------------------------
+
+- Deploy on Vercel
+- Use environment variables for Supabase keys
+
+----------------------------------------
+10. OUTPUT REQUIRED
+----------------------------------------
+
+- Full Next.js project code
+- Supabase setup steps
+- Auth implementation
+- Database queries (CRUD)
+- Step-by-step guide to run locally
+- Deployment guide
+
+----------------------------------------
+
+Make the project simple, clean, and beginner-friendly but production-ready.
+Also explain each step clearly.
