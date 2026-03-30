@@ -12,16 +12,27 @@ export default defineConfig({
       "@": path.resolve(import.meta.dirname, "client", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
+      "@tensorflow/tfjs": path.resolve(import.meta.dirname, "client", "src", "stubs", "tensorflow-stub.js"),
+      "@tensorflow/tfjs-backend-webgl": path.resolve(import.meta.dirname, "client", "src", "stubs", "tensorflow-stub.js"),
+      "@tensorflow-models/face-landmarks-detection": path.resolve(import.meta.dirname, "client", "src", "stubs", "face-landmarks-stub.js"),
     },
   },
   root: path.resolve(import.meta.dirname, "client"),
+  optimizeDeps: {
+    exclude: [
+      '@tensorflow/tfjs',
+      '@tensorflow/tfjs-backend-webgl',
+      '@tensorflow-models/face-landmarks-detection',
+    ],
+  },
   build: {
     outDir: "../dist",
     emptyOutDir: true,
     rollupOptions: {
       external: [
         '@tensorflow/tfjs',
-        '@tensorflow-models/face-landmarks-detection'
+        '@tensorflow/tfjs-backend-webgl',
+        '@tensorflow-models/face-landmarks-detection',
       ]
     }
   },

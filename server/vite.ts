@@ -22,8 +22,15 @@ export async function setupVite(server: Server, app: Express) {
       ...viteLogger,
       error: (msg, options) => {
         viteLogger.error(msg, options);
-        // Only exit on fatal server-startup errors, not client pre-transform warnings
-        if (msg.includes("Pre-transform error") || msg.includes("SyntaxError")) return;
+        // Only exit on fatal server-startup errors, not warnings about missing optional deps or scan failures
+        if (
+          msg.includes("Pre-transform error") ||
+          msg.includes("SyntaxError") ||
+          msg.includes("Failed to run dependency scan") ||
+          msg.includes("could not be resolved") ||
+          msg.includes("Failed to resolve import") ||
+          msg.includes("Internal server error")
+        ) return;
         process.exit(1);
       },
     },

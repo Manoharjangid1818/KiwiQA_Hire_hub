@@ -41,12 +41,12 @@ const loadFaceDetectionModels = async () => {
   if (faceLandmarksDetection) return;
   
   try {
-    tf = await import('@tensorflow/tfjs');
-    await import('@tensorflow/tfjs-backend-webgl');
+    tf = await import(/* @vite-ignore */ '@tensorflow/tfjs');
+    await import(/* @vite-ignore */ '@tensorflow/tfjs-backend-webgl');
     await tf.setBackend('webgl');
     await tf.ready();
     
-    faceLandmarksDetection = await import('@tensorflow-models/face-landmarks-detection');
+    faceLandmarksDetection = await import(/* @vite-ignore */ '@tensorflow-models/face-landmarks-detection');
     
     faceMesh = await faceLandmarksDetection.createDetector(
       faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
